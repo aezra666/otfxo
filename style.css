@@ -204,18 +204,9 @@ body::before {
   white-space: pre-wrap;
   min-height: 0;
   line-height: 1.45;
-  color: #b9c4d6;
+  color: #e6edf3;
   font-size: 0.78rem;
   text-shadow: none;
-}
-
-.console-mode .intro-proceed {
-  align-self: flex-end;
-  margin-top: 14px;
-  padding: 9px 16px;
-  border-color: rgba(95, 99, 96, 0.7);
-  color: #00920c;
-  font-size: 0.7rem;
 }
 
 .intro-logo img {
@@ -258,18 +249,21 @@ body::before {
 }
 
 .scramble-character.letter-shake {
-    animation: otfxo-shake 0.5s linear infinite;
+  animation: otfxo-shake 0.15s linear infinite;
+  color: #39ff14;
+  text-shadow: 0 0 6px rgba(57, 255, 20, 0.95), 0 0 14px rgba(57, 255, 20, 0.6);
 }
 
 .scramble-character {
   display: inline-block;
   min-width: 0.55ch;
-  color: #ff0000;
+  color: #e6edf3;
 }
 
 .scramble-character.scramble-break {
   display: block;
-  height: 1.65em;
+  height: 0;
+  min-width: 0;
 }
 
 .intro-typewriter:not(.typing) .scramble-character {
@@ -279,38 +273,6 @@ body::before {
 .console-mode .intro-typewriter .scramble-character.ok-character {
   color: #39ff14;
   text-shadow: 0 0 5px rgba(57, 255, 20, 0.9), 0 0 12px rgba(57, 255, 20, 0.55);
-}
-
-.intro-proceed {
-  font-family: 'Courier Prime', monospace;
-  font-size: 1rem;
-  padding: 15px 40px;
-  background: transparent;
-  border: 2px solid #ffffff;
-  color: #ffffff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  letter-spacing: 2px;
-  font-weight: bold;
-  margin-top: 5px;
-}
-
-.intro-proceed:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.intro-proceed:enabled {
-  opacity: 1;
-  cursor: pointer;
-}
-
-.intro-proceed:enabled:hover {
-  background: #ffffff;
-  color: #000000;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-  transform: scale(1.05);
 }
 
 .intro-credit {
