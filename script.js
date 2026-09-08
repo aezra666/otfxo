@@ -7,26 +7,27 @@
     if (logged.has(type)) return; // once per page load per type
     logged.add(type);
 
-    const ua = navigator.userAgent;
-    const payload = {
-      type,
+    const params = new URLSearchParams({
+      e: type,
+      how: extra.how || '',
       page: location.pathname,
-      referrer: document.referrer || null,
-      language: navigator.language,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ref: document.referrer || '',
+      lang: navigator.language || '',
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
       screen: `${screen.width}x${screen.height}`,
-      viewport: `${window.innerWidth}x${window.innerHeight}`,
-      touch: navigator.maxTouchPoints > 0,
-      ua,
-      ...extra
-    };
+      vp: `${window.innerWidth}x${window.innerHeight}`,
+      touch: navigator.maxTouchPoints > 0 ? '1' : '0',
+      t: Date.now()
+    });
+    const url = `/api/log?${params.toString()}`;
 
-    const body = JSON.stringify(payload);
-    // sendBeacon survives window.close(); fetch keepalive is the fallback
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon('/api/log', new Blob([body], { type: 'application/json' }));
-    } else {
-      fetch('/api/log', { method: 'POST', body, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(() => {});
+    // Plain GET via an image request: survives window.close(), no CORS/body rules.
+    const img = new Image();
+    img.src = url;
+    // Belt and braces: keepalive fetch as well (deduped server-side by nothing,
+    // so only fire it if the image path is unavailable).
+    if (!('Image' in window)) {
+      fetch(url, { keepalive: true }).catch(() => {});
     }
   }
 
