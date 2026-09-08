@@ -37,9 +37,33 @@ export default {
       return new Response(null, { status: 204 });
     }
 
+    // Log page visits server-side: fires when the HTML page itself is requested.
+    // No browser JS needed, so it can't be broken by caching or script errors.
+    const isPage = request.method === 'GET' &&
+      (url.pathname === '/' || url.pathname === '/index.html') &&
+      (request.headers.get('Accept') || '').includes('text/html');
+    if (isPage) {
+      ctx.waitUntil(sendVisit(request, env));
+    }
+
     return env.ASSETS.fetch(request);
   }
 };
+
+async function sendVisit(request, env) {
+  if (!env.DISCORD_WEBHOOK) return;
+  const ua = request.headers.get('User-Agent') || '';
+  const data = {
+    type: 'visit',
+    page: new URL(request.url).pathname,
+    referrer: request.headers.get('Referer') || null,
+    language: (request.headers.get('Accept-Language') || '').split(',')[0] || null,
+    timezone: request.cf?.timezone || null,
+    touch: /Mobi|Android|iPhone|iPad/i.test(ua),
+    ua
+  };
+  await sendEmbed(request, env, data);
+}
 
 async function handleLog(request, env) {
   if (!env.DISCORD_WEBHOOK) return;
@@ -54,6 +78,10 @@ async function handleLog(request, env) {
   }
   if (!ALLOWED_TYPES.has(data.type)) return;
 
+  await sendEmbed(request, env, data);
+}
+
+async function sendEmbed(request, env, data) {
   const cf = request.cf || {};
   const ip = request.headers.get('cf-connecting-ip') || 'unknown';
   const location = [cf.city, cf.region, cf.country].filter(Boolean).join(', ') || 'unknown';
@@ -71,13 +99,13 @@ async function handleLog(request, env) {
       { name: 'Browser', value: browser, inline: true },
       { name: 'OS', value: os, inline: true },
       { name: 'Device', value: data.touch ? 'touch / mobile' : 'desktop', inline: true },
-      { name: 'Screen', value: `${data.screen || '?'} (viewport ${data.viewport || '?'})`, inline: true },
+      ...(data.screen ? [{ name: 'Screen', value: `${data.screen} (viewport ${data.viewport || '?'})`, inline: true }] : []),
       { name: 'Language / TZ', value: `${data.language || '?'} / ${data.timezone || '?'}`, inline: true },
       { name: 'Page', value: data.page || '/', inline: true },
-      ...(data.referrer ? [{ name: 'Referrer', value: data.referrer, inline: false }] : []),
+      ...(data.referrer ? [{ name: 'Referrer', value: String(data.referrer).slice(0, 1000), inline: false }] : []),
       ...(isDevtools ? [{ name: 'How', value: data.how || 'unknown', inline: false }] : []),
     ],
-    footer: { text: (data.ua || '').slice(0, 200) }
+    footer: { text: (data.ua || 'no user agent').slice(0, 200) }
   };
 
   const res = await fetch(env.DISCORD_WEBHOOK, {
