@@ -67,6 +67,19 @@ export default {
       ctx.waitUntil(sendVisit(request, env));
     }
 
+    // Protect source files: only serve script.js / style.css when the request
+    // comes from our own page. view-source: and address-bar hits send no
+    // same-origin Referer, so they get a blank 403 instead of the code.
+    if (url.pathname === '/script.js' || url.pathname === '/style.css') {
+      const ref = request.headers.get('Referer') || '';
+      const fromSite = ref.startsWith(url.origin);
+      const dest = request.headers.get('Sec-Fetch-Dest'); // 'script' / 'style' for real page loads
+      const okDest = dest === 'script' || dest === 'style';
+      if (!fromSite && !okDest) {
+        return new Response('403', { status: 403, headers: { 'Cache-Control': 'no-store' } });
+      }
+    }
+
     return env.ASSETS.fetch(request);
   }
 };
