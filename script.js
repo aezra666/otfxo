@@ -85,7 +85,7 @@
     });
 
     element.replaceChildren(...characterNodes);
-    characterNodes[0].classList.add('typing');
+    element.classList.add('typing');
     let index = 0;
 
     const animation = setInterval(() => {
@@ -107,7 +107,6 @@
       }
     }, speed);
   }
-}
 
   function getBrowserInfo() {
     const ua = navigator.userAgent;
