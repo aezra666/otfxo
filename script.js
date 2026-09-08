@@ -704,3 +704,16 @@ cards.forEach(card => {
     audio.pause();
   });
 });
+
+// ---- open each member's personal page on click ----
+document.querySelectorAll('.card').forEach(card => {
+  card.style.cursor = 'pointer';
+  card.addEventListener('click', () => {
+    const pages = {
+      '1034804876733071382': 'aezra.html',
+      '1483321828838477966': 'member2.html'
+    };
+    const page = pages[card.dataset.userId];
+    if (page) window.location.href = page;
+  });
+});
