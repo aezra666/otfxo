@@ -196,22 +196,43 @@
     const introPanel = document.getElementById('intro-panel');
     const introContent = document.querySelector('.intro-content');
     const introTypewriter = document.querySelector('.intro-typewriter');
+    const proceedBtn = document.querySelector('.intro-proceed');
     const introGutter = document.querySelector('.code-gutter');
 
-    if (!introPanel || !introContent || !introTypewriter) return;
+    if (!introPanel || !introContent || !introTypewriter || !proceedBtn) return;
 
     const consoleWasRead = sessionStorage.getItem(consoleReadKey) === 'true';
     const familyStatusPromise = getFamilyStatus();
 
     typeWriter(introTypewriter, '𝗢𝗧𝗙𝗫𝗢', 80, () => {
-      setTimeout(async () => {
-        if (consoleWasRead) {
-          introPanel.classList.add('hidden');
+      proceedBtn.style.display = 'block';
+      proceedBtn.disabled = false;
+
+      const otfxoShuffleInterval = setInterval(() => {
+        const stillOnLogoScreen =
+          !introContent.classList.contains('console-mode') &&
+          !introPanel.classList.contains('hidden');
+
+        if (!stillOnLogoScreen) {
+          clearInterval(otfxoShuffleInterval);
           return;
         }
 
+        typeWriter(introTypewriter, '𝗢𝗧𝗙𝗫𝗢', 80);
+      }, 5000);
+    });
+
+    proceedBtn.addEventListener('click', async () => {
+      if (consoleWasRead) {
+        introPanel.classList.add('hidden');
+        return;
+      }
+
+      if (!introContent.classList.contains('console-mode')) {
         sessionStorage.setItem(consoleReadKey, 'true');
         introContent.classList.add('console-mode');
+        proceedBtn.disabled = true;
+        proceedBtn.style.display = 'none';
 
         const { browser, os } = getBrowserInfo();
         const { total, awake } = await familyStatusPromise;
@@ -233,7 +254,17 @@ $ enter otfxo_world
             introPanel.classList.add('hidden');
           }, 700);
         }, introGutter);
-      }, 1200);
+        return;
+      }
+
+      introPanel.classList.add('hidden');
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !proceedBtn.disabled) {
+        e.preventDefault();
+        proceedBtn.click();
+      }
     });
   });
 
