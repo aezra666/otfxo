@@ -367,7 +367,7 @@ $ enter otfxo_world
       "id": "1034804876733071382",
       "banner": "https://file.garden/aWlfqGYgcVhFp7er/banner.png",
       "music": "https://file.garden/aWlfqGYgcVhFp7er/vxc.mp3"
-    }
+    },
       {
          "id": "1102372152507912264"
       }
