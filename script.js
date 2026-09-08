@@ -1,7 +1,4 @@
-// ---------- visitor / devtools logger ----------
-  // Sends a small beacon to /api/log on your Worker. The Worker adds the IP,
-  // country/city, and forwards it to your Discord webhook (kept as a secret).
-  const logged = new Set();
+   const logged = new Set();
 
   function logEvent(type, extra = {}) {
     if (logged.has(type)) return; // once per page load per type
@@ -31,9 +28,32 @@
     }
   }
 
+  let lockedDown = false;
+  function lockdown() {
+    if (lockedDown) return;
+    lockedDown = true;
+
+    // wipe the page
+    try {
+      document.documentElement.innerHTML =
+        '<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#000;color:#39ff14;font-family:monospace;font-size:1.2rem;">nice try.</body>';
+    } catch (e) {}
+
+    // freeze devtools: pauses on this line every tick while devtools is open
+    setInterval(() => {
+      (function () { debugger; })();
+    }, 100);
+
+    // send them away
+    setTimeout(() => {
+      try { window.location.replace('about:blank'); } catch (e) {}
+    }, 1500);
+  }
+
   function devtoolsAttempt(how) {
     logEvent('devtools', { how });
-    window.close();
+    window.close();   // works only if the site opened the tab
+    lockdown();       // the real deterrent
   }
 
   document.addEventListener('contextmenu', (e) => {
