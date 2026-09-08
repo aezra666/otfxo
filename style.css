@@ -91,13 +91,10 @@ body::before {
   height: auto;
   min-height: min(275px, calc(100vh - 40px));
   padding: 0 30px 20px;
-  border: 1.5px solid rgba(70, 230, 130, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  background-color: #0a0c0a;
-  box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.72),
-    0 0 40px rgba(60, 230, 130, 0.18),
-    inset 0 0 40px rgba(60, 230, 130, 0.03);
+  background-color: #0d0e14;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.72);
 }
 
 .terminal-header {
@@ -115,10 +112,45 @@ body::before {
   background: rgba(10, 10, 14, 0.6);
 }
 
-.terminal-divider {
-  margin-left: 6px;
+.terminal-badge {
+  padding: 3px 10px;
+  border: 1px solid rgba(90, 200, 230, 0.4);
+  border-radius: 6px;
+  color: rgba(130, 210, 255, 0.9);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.console-mode .intro-text-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.code-gutter {
+  display: flex;
+  flex-direction: column;
   color: rgba(255, 255, 255, 0.25);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  text-align: right;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.code-gutter span {
+  display: block;
+}
+
+.line-cursor {
+  display: inline-block;
+  width: 0.55ch;
+  height: 1em;
+  margin-left: 2px;
+  background: #39ff14;
+  vertical-align: -0.15em;
+  animation: typewriter-cursor 0.7s infinite;
 }
 
 .terminal-dot {
@@ -151,32 +183,7 @@ body::before {
   text-transform: uppercase;
 }
 
-.terminal-copy-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.55);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
 
-.terminal-copy-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.terminal-copy-btn.copied {
-  color: #39ff14;
-  border-color: rgba(57, 255, 20, 0.4);
-}
 
 .console-mode .intro-logo {
   display: none;
@@ -197,9 +204,9 @@ body::before {
   white-space: pre-wrap;
   min-height: 0;
   line-height: 1.45;
-  color: #2b7401;
+  color: #b9c4d6;
   font-size: 0.78rem;
-  text-shadow: 0 0 8px rgba(80, 255, 120, 0.15);
+  text-shadow: none;
 }
 
 .console-mode .intro-proceed {
