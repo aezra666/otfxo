@@ -218,7 +218,7 @@ body::before {
   100% { transform: translate(0, 0); }
 }
 
-.scramble-character.typing {
+.intro-typewriter.typing {
     animation: otfxo-shake 0.5s linear infinite;
 }
 
