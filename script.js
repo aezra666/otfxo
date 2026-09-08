@@ -64,7 +64,7 @@
 
   let isTyping = false;
 
-  function typeWriter(element, text, speed = 60, callback = null) {
+  function typeWriter(element, text, speed = 60, callback = null, gutterElement = null) {
     const scrambleCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%€&/.,<>';
     const characters = [...text];
     const okCharacterIndexes = new Set();
@@ -88,6 +88,16 @@
     element.classList.add('typing');
     let index = 0;
 
+    if (gutterElement) {
+      const lineCount = text.split('\n').length;
+      gutterElement.innerHTML = '';
+      for (let lineNumber = 1; lineNumber <= lineCount; lineNumber++) {
+        const lineSpan = document.createElement('span');
+        lineSpan.textContent = lineNumber;
+        gutterElement.appendChild(lineSpan);
+      }
+    }
+
     const animation = setInterval(() => {
       characterNodes.forEach((node, nodeIndex) => {
         if (nodeIndex >= index && characters[nodeIndex] !== ' ' && characters[nodeIndex] !== '\n') {
@@ -110,6 +120,9 @@
       if (index >= characters.length) {
         clearInterval(animation);
         element.classList.remove('typing');
+        const cursorNode = document.createElement('span');
+        cursorNode.className = 'line-cursor';
+        element.appendChild(cursorNode);
         if (callback) callback();
       }
     }, speed);
@@ -145,20 +158,7 @@
     const introContent = document.querySelector('.intro-content');
     const introTypewriter = document.querySelector('.intro-typewriter');
     const proceedBtn = document.querySelector('.intro-proceed');
-    const copyBtn = document.querySelector('.terminal-copy-btn');
-
-    if (copyBtn) {
-      copyBtn.addEventListener('click', async () => {
-        const textToCopy = introTypewriter ? introTypewriter.textContent : '';
-        try {
-          await navigator.clipboard.writeText(textToCopy);
-        } catch {
-          return;
-        }
-        copyBtn.classList.add('copied');
-        setTimeout(() => copyBtn.classList.remove('copied'), 1200);
-      });
-    }
+    const introGutter = document.querySelector('.code-gutter');
 
     if (!introPanel || !introContent || !introTypewriter || !proceedBtn) return;
 
@@ -211,7 +211,7 @@ $ enter otfxo_world
           setTimeout(() => {
             introPanel.classList.add('hidden');
           }, 700);
-        });
+        }, introGutter);
         return;
       }
 
