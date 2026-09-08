@@ -211,15 +211,15 @@ body::before {
 
 @keyframes otfxo-shake {
   0% { transform: translate(0, 0); }
-  20% { transform: translate(-2px, 1px); }
-  40% { transform: translate(2px, -1px); }
+  20% { transform: translate(-1px, 1px); }
+  40% { transform: translate(1px, -1px); }
   60% { transform: translate(-1px, -1px); }
   80% { transform: translate(1px, 1px); }
   100% { transform: translate(0, 0); }
 }
 
 .intro-typewriter.typing {
-  animation: otfxo-shake 0.12s linear infinite;
+  animation: otfxo-shake 0.5s linear infinite;
 }
 
 .scramble-character {
