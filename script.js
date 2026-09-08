@@ -85,7 +85,7 @@
     });
 
     element.replaceChildren(...characterNodes);
-    element.classList.add('typing');
+    characterNodes[0].classList.add('typing');
     let index = 0;
 
     const animation = setInterval(() => {
@@ -95,18 +95,19 @@
         }
       });
 
-      if (index < characters.length) {
-        characterNodes[index].textContent = characters[index];
-        index++;
-      }
+ if (index < characters.length) {
+    // Current letter becomes correct — stop shaking
+    characterNodes[index].classList.remove('typing');
+    characterNodes[index].textContent = characters[index];
 
-      if (index >= characters.length) {
-        clearInterval(animation);
-        element.classList.remove('typing');
-        if (callback) callback();
-      }
-    }, speed);
-  }
+    // Move to next letter
+    index++;
+
+    // Next letter starts shaking
+    if (index < characters.length) {
+        characterNodes[index].classList.add('typing');
+    }
+}
 
   function getBrowserInfo() {
     const ua = navigator.userAgent;
