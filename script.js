@@ -64,7 +64,7 @@
 
   let isTyping = false;
 
-  function typeWriter(element, text, speed = 60, callback = null, gutterElement = null) {
+  function typeWriter(element, text, speed = 40, callback = null, gutterElement = null) {
     const scrambleCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%€&/.,<>';
     const characters = [...text];
     const okCharacterIndexes = new Set();
@@ -75,62 +75,96 @@
       }
     }
 
-    const characterNodes = characters.map((character, characterIndex) => {
-      const node = document.createElement('span');
-      node.className = 'scramble-character';
-      if (character === '\n') node.classList.add('scramble-break');
-      if (okCharacterIndexes.has(characterIndex)) node.classList.add('ok-character');
-      node.textContent = character === ' ' || character === '\n' ? character : scrambleCharacters[Math.floor(Math.random() * scrambleCharacters.length)];
-      return node;
-    });
-
-    element.replaceChildren(...characterNodes);
+    element.replaceChildren();
     element.classList.add('typing');
     let index = 0;
 
-   let gutterLineNumber = 1;
-if (gutterElement) {
-  gutterElement.innerHTML = '';
-  const firstLineSpan = document.createElement('span');
-  firstLineSpan.textContent = gutterLineNumber;
-  gutterElement.appendChild(firstLineSpan);
-}
+    let gutterLineNumber = 1;
+    let gutterRowTop = null;
+    if (gutterElement) {
+      gutterElement.innerHTML = '';
+      const firstLineSpan = document.createElement('span');
+      firstLineSpan.textContent = gutterLineNumber;
+      gutterElement.appendChild(firstLineSpan);
+    }
 
-    const animation = setInterval(() => {
-      characterNodes.forEach((node, nodeIndex) => {
-        if (nodeIndex >= index && characters[nodeIndex] !== ' ' && characters[nodeIndex] !== '\n') {
-          node.textContent = scrambleCharacters[Math.floor(Math.random() * scrambleCharacters.length)];
-        }
-      });
-
-      // Only the letter currently being "found" shakes
-      characterNodes.forEach(node => node.classList.remove('letter-shake'));
-      if (index < characters.length && characters[index] !== ' ' && characters[index] !== '\n') {
-        characterNodes[index].classList.add('letter-shake');
+    function trackGutterRow(node) {
+      if (!gutterElement) return;
+      const rowTop = node.offsetTop;
+      if (gutterRowTop === null) {
+        gutterRowTop = rowTop;
+      } else if (rowTop > gutterRowTop) {
+        gutterLineNumber++;
+        const lineSpan = document.createElement('span');
+        lineSpan.textContent = gutterLineNumber;
+        gutterElement.appendChild(lineSpan);
+        gutterRowTop = rowTop;
       }
+    }
 
-      if (index < characters.length) {
-  characterNodes[index].textContent = characters[index];
-  characterNodes[index].classList.remove('letter-shake'); // correct letter found, shake stops
-  if (gutterElement && characters[index] === '\n') {
-    gutterLineNumber++;
-    const lineSpan = document.createElement('span');
-    lineSpan.textContent = gutterLineNumber;
-    gutterElement.appendChild(lineSpan);
-  }
-  index++;
-}
-
-
+    function revealNext() {
       if (index >= characters.length) {
-        clearInterval(animation);
         element.classList.remove('typing');
         const cursorNode = document.createElement('span');
         cursorNode.className = 'line-cursor';
         element.appendChild(cursorNode);
         if (callback) callback();
+        return;
       }
-    }, speed);
+
+      const character = characters[index];
+      const node = document.createElement('span');
+      node.className = 'scramble-character';
+      if (character === '\n') node.classList.add('scramble-break');
+      if (okCharacterIndexes.has(index)) node.classList.add('ok-character');
+      element.appendChild(node);
+
+      if (character === ' ' || character === '\n') {
+        node.textContent = character === '\n' ? '' : character;
+        trackGutterRow(node);
+        index++;
+        setTimeout(revealNext, speed);
+        return;
+      }
+
+      node.classList.add('letter-shake');
+      const scrambleTicks = 2;
+      let tick = 0;
+      const scrambleTick = Math.max(10, Math.floor(speed / 2));
+      const scrambleInterval = setInterval(() => {
+        node.textContent = scrambleCharacters[Math.floor(Math.random() * scrambleCharacters.length)];
+        tick++;
+        if (tick >= scrambleTicks) {
+          clearInterval(scrambleInterval);
+          node.textContent = character;
+          node.classList.remove('letter-shake');
+          trackGutterRow(node);
+          index++;
+          setTimeout(revealNext, speed);
+        }
+      }, scrambleTick);
+    }
+
+    revealNext();
+  }
+
+  async function getFamilyStatus() {
+    const total = discordUsers.length;
+    let awake = 0;
+
+    await Promise.all(discordUsers.map(async (user) => {
+      try {
+        const res = await fetch(`https://api.lanyard.rest/v1/users/${user.id}`);
+        const json = await res.json();
+        if (json.success && json.data.discord_status && json.data.discord_status !== 'offline') {
+          awake++;
+        }
+      } catch (err) {
+        console.error('Lanyard status fetch error', err);
+      }
+    }));
+
+    return { total, awake };
   }
 
   function getBrowserInfo() {
@@ -162,72 +196,44 @@ if (gutterElement) {
     const introPanel = document.getElementById('intro-panel');
     const introContent = document.querySelector('.intro-content');
     const introTypewriter = document.querySelector('.intro-typewriter');
-    const proceedBtn = document.querySelector('.intro-proceed');
     const introGutter = document.querySelector('.code-gutter');
 
-    if (!introPanel || !introContent || !introTypewriter || !proceedBtn) return;
+    if (!introPanel || !introContent || !introTypewriter) return;
 
     const consoleWasRead = sessionStorage.getItem(consoleReadKey) === 'true';
+    const familyStatusPromise = getFamilyStatus();
 
-    const { browser, os } = getBrowserInfo();
-    const consoleText = `$ ssh otfxo@world --user=guest
+    typeWriter(introTypewriter, '𝗢𝗧𝗙𝗫𝗢', 80, () => {
+      setTimeout(async () => {
+        if (consoleWasRead) {
+          introPanel.classList.add('hidden');
+          return;
+        }
+
+        sessionStorage.setItem(consoleReadKey, 'true');
+        introContent.classList.add('console-mode');
+
+        const { browser, os } = getBrowserInfo();
+        const { total, awake } = await familyStatusPromise;
+        const consoleText = `$ ssh otfxo@world --user=guest
 connecting...
 [OK] handshake complete
 $ otfxoctl status
 scanning the family...
-[OK] 1 otfxo counted
-[OK] 0 otfxo awake
+[OK] ${total} otfxo counted
+[OK] ${awake} otfxo awake
 $ client info
 [OK] browser: ${browser}
 [OK] os: ${os}
 $ enter otfxo_world
 > welcome`;
 
-    typeWriter(introTypewriter, '𝗢𝗧𝗙𝗫𝗢', 80, () => {
-      proceedBtn.style.display = 'block';
-      proceedBtn.disabled = false;
-
-      const otfxoShuffleInterval = setInterval(() => {
-        const stillOnLogoScreen =
-          !introContent.classList.contains('console-mode') &&
-          !introPanel.classList.contains('hidden');
-
-        if (!stillOnLogoScreen) {
-          clearInterval(otfxoShuffleInterval);
-          return;
-        }
-
-        typeWriter(introTypewriter, '𝗢𝗧𝗙𝗫𝗢', 80);
-      }, 5000);
-    });
-
-    proceedBtn.addEventListener('click', () => {
-      if (consoleWasRead) {
-        introPanel.classList.add('hidden');
-        return;
-      }
-
-      if (!introContent.classList.contains('console-mode')) {
-        sessionStorage.setItem(consoleReadKey, 'true');
-        introContent.classList.add('console-mode');
-        proceedBtn.disabled = true;
-        proceedBtn.style.display = 'none';
-        typeWriter(introTypewriter, consoleText, 40, () => {
+        typeWriter(introTypewriter, consoleText, 14, () => {
           setTimeout(() => {
             introPanel.classList.add('hidden');
           }, 700);
         }, introGutter);
-        return;
-      }
-
-      introPanel.classList.add('hidden');
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !proceedBtn.disabled) {
-        e.preventDefault();
-        proceedBtn.click();
-      }
+      }, 1200);
     });
   });
 
