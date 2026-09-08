@@ -25,6 +25,27 @@ export default {
         });
       }
 
+      // Simple GET beacon: /api/log?e=devtools&how=F12&... (used by script.js)
+      if (request.method === 'GET' && url.searchParams.get('e')) {
+        const p = url.searchParams;
+        const data = {
+          type: p.get('e'),
+          how: p.get('how') || 'unknown',
+          page: p.get('page') || '/',
+          referrer: p.get('ref') || null,
+          language: p.get('lang') || null,
+          timezone: p.get('tz') || null,
+          screen: p.get('screen') || null,
+          viewport: p.get('vp') || null,
+          touch: p.get('touch') === '1',
+          ua: request.headers.get('User-Agent') || ''
+        };
+        if (ALLOWED_TYPES.has(data.type)) {
+          ctx.waitUntil(sendEmbed(request, env, data));
+        }
+        return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
+      }
+
       if (request.method !== 'POST') {
         return new Response('Method not allowed', { status: 405 });
       }
