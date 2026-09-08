@@ -10,6 +10,21 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/log') {
+      // Debug: open /api/log?test=1 in a browser to send a test message
+      // and see exactly what Discord replies.
+      if (request.method === 'GET' && url.searchParams.get('test') === '1') {
+        if (!env.DISCORD_WEBHOOK) return new Response('DISCORD_WEBHOOK secret is missing', { status: 500 });
+        const res = await fetch(env.DISCORD_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: 'otfxo logger', content: '✅ test from worker — logger is connected' })
+        });
+        const text = await res.text();
+        return new Response(`Discord replied: ${res.status} ${res.statusText}\n${text}`, {
+          status: 200, headers: { 'Content-Type': 'text/plain' }
+        });
+      }
+
       if (request.method !== 'POST') {
         return new Response('Method not allowed', { status: 405 });
       }
@@ -65,11 +80,14 @@ async function handleLog(request, env) {
     footer: { text: (data.ua || '').slice(0, 200) }
   };
 
-  await fetch(env.DISCORD_WEBHOOK, {
+  const res = await fetch(env.DISCORD_WEBHOOK, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: 'otfxo logger', embeds: [embed] })
   });
+  if (!res.ok) {
+    console.error('Discord webhook failed', res.status, await res.text());
+  }
 }
 
 function parseUA(ua) {
