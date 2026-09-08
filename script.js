@@ -89,24 +89,31 @@
     let index = 0;
 
     const animation = setInterval(() => {
-      characterNodes.forEach((node, nodeIndex) => {
-        if (nodeIndex >= index && characters[nodeIndex] !== ' ' && characters[nodeIndex] !== '\n') {
-          node.textContent = scrambleCharacters[Math.floor(Math.random() * scrambleCharacters.length)];
-        }
-      });
+  characterNodes.forEach((node, nodeIndex) => {
+    if (nodeIndex >= index && characters[nodeIndex] !== ' ' && characters[nodeIndex] !== '\n') {
+      node.textContent = scrambleCharacters[Math.floor(Math.random() * scrambleCharacters.length)];
+    }
+  });
 
-      if (index < characters.length) {
-        characterNodes[index].textContent = characters[index];
-        index++;
-      }
-
-      if (index >= characters.length) {
-        clearInterval(animation);
-        element.classList.remove('typing');
-        if (callback) callback();
-      }
-    }, speed);
+  // Only the letter currently being "found" shakes
+  characterNodes.forEach(node => node.classList.remove('letter-shake'));
+  if (index < characters.length && characters[index] !== ' ' && characters[index] !== '\n') {
+    characterNodes[index].classList.add('letter-shake');
   }
+
+  if (index < characters.length) {
+    characterNodes[index].textContent = characters[index];
+    characterNodes[index].classList.remove('letter-shake'); // correct letter found, shake stops
+    index++;
+  }
+
+  if (index >= characters.length) {
+    clearInterval(animation);
+    element.classList.remove('typing');
+    if (callback) callback();
+  }
+}, speed);
+
 
   function getBrowserInfo() {
     const ua = navigator.userAgent;
