@@ -1,0 +1,14 @@
+name = "otfxo"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# Serve index.html / script.js / style.css from the repo root.
+# run_worker_first makes sure /api/log reaches worker.js instead of the asset server.
+[assets]
+directory = "./"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+# DISCORD_WEBHOOK is a secret, NOT set here. Add it with:
+#   npx wrangler secret put DISCORD_WEBHOOK
+# and paste your webhook URL when prompted.
