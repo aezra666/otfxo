@@ -91,14 +91,13 @@ body::before {
   height: auto;
   min-height: min(275px, calc(100vh - 40px));
   padding: 0 30px 20px;
-  border: 1px solid rgba(152, 89, 224, 0.38);
-  border-radius: 9px;
-  background-color: #09090d;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
-  background-size: 4px 4px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.72), 0 0 24px rgba(125, 63, 197, 0.12);
+  border: 1.5px solid rgba(70, 230, 130, 0.45);
+  border-radius: 20px;
+  background-color: #0a0c0a;
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.72),
+    0 0 40px rgba(60, 230, 130, 0.18),
+    inset 0 0 40px rgba(60, 230, 130, 0.03);
 }
 
 .terminal-header {
@@ -109,11 +108,17 @@ body::before {
   display: flex;
   align-items: center;
   gap: 7px;
-  height: 44px;
+  height: 52px;
   margin: 0 -30px 12px;
-  padding: 0 30px;
+  padding: 0 22px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(10, 10, 14, 0.8);
+  background: rgba(10, 10, 14, 0.6);
+}
+
+.terminal-divider {
+  margin-left: 6px;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.8rem;
 }
 
 .terminal-dot {
@@ -137,13 +142,40 @@ body::before {
 
 .terminal-title {
   flex: 1;
-  margin-left: 9px;
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 0.62rem;
+  margin-left: 6px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.3em;
   text-align: left;
   text-transform: uppercase;
+}
+
+.terminal-copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.55);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.terminal-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.terminal-copy-btn.copied {
+  color: #39ff14;
+  border-color: rgba(57, 255, 20, 0.4);
 }
 
 .console-mode .intro-logo {
@@ -221,7 +253,6 @@ body::before {
 .scramble-character.letter-shake {
     animation: otfxo-shake 0.5s linear infinite;
 }
-
 
 .scramble-character {
   display: inline-block;
