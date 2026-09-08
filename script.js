@@ -368,6 +368,9 @@ $ enter otfxo_world
       "banner": "https://file.garden/aWlfqGYgcVhFp7er/banner.png",
       "music": "https://file.garden/aWlfqGYgcVhFp7er/vxc.mp3"
     }
+      {
+         "id": "1102372152507912264"
+      }
   ];
 
   async function fetchDiscordInfoMembers(discordId) {
