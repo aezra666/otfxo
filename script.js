@@ -157,10 +157,24 @@ $ client info
 $ enter otfxo_world
 > welcome`;
 
-    typeWriter(introTypewriter, '𝗢𝗧𝗙𝗫𝗢', 50, () => {
+     typeWriter(introTypewriter, '𝗢𝗧𝗙𝗫𝗢', 80, () => {
       proceedBtn.style.display = 'block';
       proceedBtn.disabled = false;
+
+      const otfxoShuffleInterval = setInterval(() => {
+        const stillOnLogoScreen =
+          !introContent.classList.contains('console-mode') &&
+          !introPanel.classList.contains('hidden');
+
+        if (!stillOnLogoScreen) {
+          clearInterval(otfxoShuffleInterval);
+          return;
+        }
+
+        typeWriter(introTypewriter, '𝗢𝗧𝗙𝗫𝗢', 80);
+      }, 5000);
     });
+
 
     proceedBtn.addEventListener('click', () => {
       if (consoleWasRead) {
