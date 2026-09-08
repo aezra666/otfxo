@@ -3,7 +3,7 @@
       return false;
     });
 
-   /* document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', (e) => {
       let closeWindow = false;
       if (e.key === 'F12') {
         closeWindow = true;
@@ -58,7 +58,7 @@
       if (e.button === 2) {
         window.close();
       }
-    }); */
+    }); 
 
   const aboutText = ``;
 
