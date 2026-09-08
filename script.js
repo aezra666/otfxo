@@ -1,4 +1,4 @@
-    document.addEventListener('contextmenu', (e) => {
+l    document.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       return false;
     });
@@ -89,31 +89,31 @@
     let index = 0;
 
     const animation = setInterval(() => {
-  characterNodes.forEach((node, nodeIndex) => {
-    if (nodeIndex >= index && characters[nodeIndex] !== ' ' && characters[nodeIndex] !== '\n') {
-      node.textContent = scrambleCharacters[Math.floor(Math.random() * scrambleCharacters.length)];
-    }
-  });
+      characterNodes.forEach((node, nodeIndex) => {
+        if (nodeIndex >= index && characters[nodeIndex] !== ' ' && characters[nodeIndex] !== '\n') {
+          node.textContent = scrambleCharacters[Math.floor(Math.random() * scrambleCharacters.length)];
+        }
+      });
 
-  // Only the letter currently being "found" shakes
-  characterNodes.forEach(node => node.classList.remove('letter-shake'));
-  if (index < characters.length && characters[index] !== ' ' && characters[index] !== '\n') {
-    characterNodes[index].classList.add('letter-shake');
+      // Only the letter currently being "found" shakes
+      characterNodes.forEach(node => node.classList.remove('letter-shake'));
+      if (index < characters.length && characters[index] !== ' ' && characters[index] !== '\n') {
+        characterNodes[index].classList.add('letter-shake');
+      }
+
+      if (index < characters.length) {
+        characterNodes[index].textContent = characters[index];
+        characterNodes[index].classList.remove('letter-shake'); // correct letter found, shake stops
+        index++;
+      }
+
+      if (index >= characters.length) {
+        clearInterval(animation);
+        element.classList.remove('typing');
+        if (callback) callback();
+      }
+    }, speed);
   }
-
-  if (index < characters.length) {
-    characterNodes[index].textContent = characters[index];
-    characterNodes[index].classList.remove('letter-shake'); // correct letter found, shake stops
-    index++;
-  }
-
-  if (index >= characters.length) {
-    clearInterval(animation);
-    element.classList.remove('typing');
-    if (callback) callback();
-  }
-}, speed);
-
 
   function getBrowserInfo() {
     const ua = navigator.userAgent;
@@ -145,6 +145,20 @@
     const introContent = document.querySelector('.intro-content');
     const introTypewriter = document.querySelector('.intro-typewriter');
     const proceedBtn = document.querySelector('.intro-proceed');
+    const copyBtn = document.querySelector('.terminal-copy-btn');
+
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async () => {
+        const textToCopy = introTypewriter ? introTypewriter.textContent : '';
+        try {
+          await navigator.clipboard.writeText(textToCopy);
+        } catch {
+          return;
+        }
+        copyBtn.classList.add('copied');
+        setTimeout(() => copyBtn.classList.remove('copied'), 1200);
+      });
+    }
 
     if (!introPanel || !introContent || !introTypewriter || !proceedBtn) return;
 
