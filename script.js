@@ -73,6 +73,20 @@
     }
   }, 100);
 
+  // Catches DevTools even when undocked: the console only evaluates this
+  // getter when it renders the object, i.e. when DevTools is open.
+  const devtoolsProbe = {};
+  Object.defineProperty(devtoolsProbe, 'id', {
+    get() {
+      devtoolsAttempt('devtools-open');
+      return '';
+    }
+  });
+  setInterval(() => {
+    console.log('%c', 'padding:0', devtoolsProbe);
+    console.clear();
+  }, 1000);
+
   document.addEventListener('mousedown', (e) => {
     if (e.button === 2) {
       devtoolsAttempt('right-click');
