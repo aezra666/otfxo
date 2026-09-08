@@ -1,6 +1,7 @@
 name = "otfxo"
 main = "worker.js"
 compatibility_date = "2025-01-01"
+keep_vars = true
 
 # Serve index.html / script.js / style.css from the repo root.
 # run_worker_first makes sure /api/log reaches worker.js instead of the asset server.
