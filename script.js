@@ -95,18 +95,18 @@
         }
       });
 
- if (index < characters.length) {
-    // Current letter becomes correct — stop shaking
-    characterNodes[index].classList.remove('typing');
-    characterNodes[index].textContent = characters[index];
+      if (index < characters.length) {
+        characterNodes[index].textContent = characters[index];
+        index++;
+      }
 
-    // Move to next letter
-    index++;
-
-    // Next letter starts shaking
-    if (index < characters.length) {
-        characterNodes[index].classList.add('typing');
-    }
+      if (index >= characters.length) {
+        clearInterval(animation);
+        element.classList.remove('typing');
+        if (callback) callback();
+      }
+    }, speed);
+  }
 }
 
   function getBrowserInfo() {
