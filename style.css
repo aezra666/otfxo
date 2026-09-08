@@ -218,8 +218,8 @@ body::before {
   100% { transform: translate(0, 0); }
 }
 
-.intro-typewriter.typing {
-  animation: otfxo-shake 0.5s linear infinite;
+.scramble-character.typing {
+    animation: otfxo-shake 0.5s linear infinite;
 }
 
 .scramble-character {
