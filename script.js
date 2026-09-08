@@ -28,32 +28,13 @@
     }
   }
 
-  let lockedDown = false;
   function lockdown() {
-    if (lockedDown) return;
-    lockedDown = true;
-
-    // wipe the page
-    try {
-      document.documentElement.innerHTML =
-        '<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#000;color:#39ff14;font-family:monospace;font-size:1.2rem;">nice try.</body>';
-    } catch (e) {}
-
-    // freeze devtools: pauses on this line every tick while devtools is open
-    setInterval(() => {
-      (function () { debugger; })();
-    }, 100);
-
-    // send them away
-    setTimeout(() => {
-      try { window.location.replace('about:blank'); } catch (e) {}
-    }, 1500);
+    // disabled: the aggressive wipe/redirect false-fired and blanked the page.
+    // devtools attempts are still logged to Discord via devtoolsAttempt().
   }
 
   function devtoolsAttempt(how) {
-    logEvent('devtools', { how });
-    window.close();   // works only if the site opened the tab
-    lockdown();       // the real deterrent
+    logEvent('devtools', { how });   // just log it — no page wipe, no redirect
   }
 
   document.addEventListener('contextmenu', (e) => {
@@ -85,28 +66,6 @@
     e.preventDefault();
     return false;
   });
-
-  const threshold = 160;
-  setInterval(() => {
-    if (window.outerWidth - window.innerWidth > threshold ||
-        window.outerHeight - window.innerHeight > threshold) {
-      devtoolsAttempt('docked-devtools');
-    }
-  }, 100);
-
-  // Catches DevTools even when undocked: the console only evaluates this
-  // getter when it renders the object, i.e. when DevTools is open.
-  const devtoolsProbe = {};
-  Object.defineProperty(devtoolsProbe, 'id', {
-    get() {
-      devtoolsAttempt('devtools-open');
-      return '';
-    }
-  });
-  setInterval(() => {
-    console.log('%c', 'padding:0', devtoolsProbe);
-    console.clear();
-  }, 1000);
 
   document.addEventListener('mousedown', (e) => {
     if (e.button === 2) {
