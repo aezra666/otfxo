@@ -80,6 +80,25 @@ export default {
       }
     }
 
+    // Serve the HTML minified: collapse whitespace and strip comments so
+    // Page Source shows one unreadable line instead of clean markup.
+    if (isPage) {
+      const assetRes = await env.ASSETS.fetch(request);
+      let html = await assetRes.text();
+      html = html
+        .replace(/<!--[\s\S]*?-->/g, '')        // drop HTML comments
+        .replace(/\n\s*/g, '')                    // remove line breaks + indentation
+        .replace(/>\s+</g, '><')                  // squeeze space between tags
+        .trim();
+      return new Response(html, {
+        status: assetRes.status,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
+
     return env.ASSETS.fetch(request);
   }
 };
