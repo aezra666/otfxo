@@ -88,15 +88,13 @@
     element.classList.add('typing');
     let index = 0;
 
-    if (gutterElement) {
-      const lineCount = text.split('\n').length;
-      gutterElement.innerHTML = '';
-      for (let lineNumber = 1; lineNumber <= lineCount; lineNumber++) {
-        const lineSpan = document.createElement('span');
-        lineSpan.textContent = lineNumber;
-        gutterElement.appendChild(lineSpan);
-      }
-    }
+   let gutterLineNumber = 1;
+if (gutterElement) {
+  gutterElement.innerHTML = '';
+  const firstLineSpan = document.createElement('span');
+  firstLineSpan.textContent = gutterLineNumber;
+  gutterElement.appendChild(firstLineSpan);
+}
 
     const animation = setInterval(() => {
       characterNodes.forEach((node, nodeIndex) => {
@@ -112,10 +110,17 @@
       }
 
       if (index < characters.length) {
-        characterNodes[index].textContent = characters[index];
-        characterNodes[index].classList.remove('letter-shake'); // correct letter found, shake stops
-        index++;
-      }
+  characterNodes[index].textContent = characters[index];
+  characterNodes[index].classList.remove('letter-shake'); // correct letter found, shake stops
+  if (gutterElement && characters[index] === '\n') {
+    gutterLineNumber++;
+    const lineSpan = document.createElement('span');
+    lineSpan.textContent = gutterLineNumber;
+    gutterElement.appendChild(lineSpan);
+  }
+  index++;
+}
+
 
       if (index >= characters.length) {
         clearInterval(animation);
