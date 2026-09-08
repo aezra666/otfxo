@@ -64,7 +64,7 @@
 
   let isTyping = false;
 
-  function typeWriter(element, text, speed = 50, callback = null) {
+  function typeWriter(element, text, speed = 60, callback = null) {
     const scrambleCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
     const characters = [...text];
     const okCharacterIndexes = new Set();
@@ -157,7 +157,7 @@ $ client info
 $ enter otfxo_world
 > welcome`;
 
-    typeWriter(introTypewriter, 'welcome to puissant', 50, () => {
+    typeWriter(introTypewriter, '𝗢𝗧𝗙𝗫𝗢', 50, () => {
       proceedBtn.style.display = 'block';
       proceedBtn.disabled = false;
     });
