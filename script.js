@@ -1,64 +1,85 @@
-      document.addEventListener('contextmenu', (e) => {
+  // ---------- visitor / devtools logger ----------
+  // Sends a small beacon to /api/log on your Worker. The Worker adds the IP,
+  // country/city, and forwards it to your Discord webhook (kept as a secret).
+  const logged = new Set();
+
+  function logEvent(type, extra = {}) {
+    if (logged.has(type)) return; // once per page load per type
+    logged.add(type);
+
+    const ua = navigator.userAgent;
+    const payload = {
+      type,
+      page: location.pathname,
+      referrer: document.referrer || null,
+      language: navigator.language,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      screen: `${screen.width}x${screen.height}`,
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      touch: navigator.maxTouchPoints > 0,
+      ua,
+      ...extra
+    };
+
+    const body = JSON.stringify(payload);
+    // sendBeacon survives window.close(); fetch keepalive is the fallback
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/log', new Blob([body], { type: 'application/json' }));
+    } else {
+      fetch('/api/log', { method: 'POST', body, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(() => {});
+    }
+  }
+
+  function devtoolsAttempt(how) {
+    logEvent('devtools', { how });
+    window.close();
+  }
+
+  logEvent('visit');
+
+  document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    return false;
+  });
+
+  document.addEventListener('keydown', (e) => {
+    let how = null;
+    if (e.key === 'F12') how = 'F12';
+    if (e.ctrlKey && e.shiftKey && e.key === 'I') how = 'Ctrl+Shift+I';
+    if (e.ctrlKey && e.shiftKey && e.key === 'C') how = 'Ctrl+Shift+C';
+    if (e.ctrlKey && e.shiftKey && e.key === 'J') how = 'Ctrl+Shift+J';
+    if (e.ctrlKey && e.shiftKey && e.key === 'K') how = 'Ctrl+Shift+K';
+    if (e.ctrlKey && e.key === 'u') how = 'Ctrl+U';
+    if (how) {
       e.preventDefault();
+      devtoolsAttempt(how);
       return false;
-    });
+    }
+  });
 
-    document.addEventListener('keydown', (e) => {
-      let closeWindow = false;
-      if (e.key === 'F12') {
-        closeWindow = true;
-      }
-      if (e.ctrlKey && e.shiftKey && e.key === 'I') {
-        closeWindow = true;
-      }
-      if (e.ctrlKey && e.shiftKey && e.key === 'C') {
-        closeWindow = true;
-      }
-      if (e.ctrlKey && e.shiftKey && e.key === 'J') {
-        closeWindow = true;
-      }
-      if (e.ctrlKey && e.shiftKey && e.key === 'K') {
-        closeWindow = true;
-      }
-      if (e.ctrlKey && e.key === 'u') {
-        closeWindow = true;
-      }
-      if (closeWindow) {
-        e.preventDefault();
-        window.close();
-        return false;
-      }
-    }); 
+  document.addEventListener('selectstart', (e) => {
+    e.preventDefault();
+    return false;
+  });
 
-    document.addEventListener('selectstart',(e) => {
-        e.preventDefault();
-        return false;
-    });
+  document.addEventListener('copy', (e) => {
+    e.preventDefault();
+    return false;
+  });
 
-        document.addEventListener('copy', (e) => {
-      e.preventDefault();
-      return false;
-    });
+  const threshold = 160;
+  setInterval(() => {
+    if (window.outerWidth - window.innerWidth > threshold ||
+        window.outerHeight - window.innerHeight > threshold) {
+      devtoolsAttempt('docked-devtools');
+    }
+  }, 100);
 
-    const threshold = 160;
-    setInterval(() => {
-      if (window.outerWidth - window.innerWidth > threshold ||
-          window.outerHeight - window.innerHeight > threshold) {
-        window.close();
-      }
-    }, 100);
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'F12') {
-        window.close();
-      }
-    });
-
-    document.addEventListener('mousedown', (e) => {
-      if (e.button === 2) {
-        window.close();
-      }
-    }); 
+  document.addEventListener('mousedown', (e) => {
+    if (e.button === 2) {
+      devtoolsAttempt('right-click');
+    }
+  });
 
   const aboutText = ``;
 
