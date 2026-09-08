@@ -1,4 +1,4 @@
-  // ---------- visitor / devtools logger ----------
+// ---------- visitor / devtools logger ----------
   // Sends a small beacon to /api/log on your Worker. The Worker adds the IP,
   // country/city, and forwards it to your Discord webhook (kept as a secret).
   const logged = new Set();
@@ -34,8 +34,6 @@
     logEvent('devtools', { how });
     window.close();
   }
-
-  logEvent('visit');
 
   document.addEventListener('contextmenu', (e) => {
     e.preventDefault();
@@ -668,5 +666,3 @@ cards.forEach(card => {
     audio.pause();
   });
 });
-
-
