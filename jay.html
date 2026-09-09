@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>jay — otfxo</title>
+<title>aezra — otfxo</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&amp;family=Courier+Prime&amp;display=swap" rel="stylesheet">
 <style>
 :root {
@@ -409,6 +409,19 @@ body::before {
 body.crt-mode::after { content:''; position:fixed; inset:0; z-index:50; pointer-events:none; opacity:0.16; background:repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,0.12) 4px); mix-blend-mode:screen; }
 body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
 
+/* code-drawn eye visitor counter */
+.eye-counter { position:absolute; top:12px; right:12px; z-index:4; display:flex; align-items:center; gap:7px; padding:5px 10px 5px 7px; border:1px solid color-mix(in srgb, var(--accent-color, #b980ff) 55%, transparent); border-radius:999px; background:rgba(8,9,12,0.58); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); box-shadow:0 0 16px color-mix(in srgb, var(--accent-color, #b980ff) 30%, transparent); color:#fff; font-size:10.5px; letter-spacing:0.07em; }
+.eye-counter svg { width:23px; height:14px; overflow:visible; }
+.eye-counter .eye-lid { fill:none; stroke:var(--accent-color, #b980ff); stroke-width:1.6; stroke-linecap:round; }
+.eye-counter .eye-iris { fill:color-mix(in srgb, var(--accent-color, #b980ff) 35%, transparent); stroke:var(--accent-color, #b980ff); stroke-width:1.2; }
+.eye-counter .eye-pupil { fill:var(--accent-color, #b980ff); }
+.eye-counter .eye-shine { fill:#fff; opacity:0.9; }
+.eye-counter .eye { transform-origin:13px 8px; animation: eye-blink 5.5s ease-in-out infinite; }
+.eye-counter .eye-look { animation: eye-look 9s ease-in-out infinite; }
+@keyframes eye-blink { 0%, 92%, 100% { transform:scaleY(1); } 95% { transform:scaleY(0.08); } }
+@keyframes eye-look { 0%, 35%, 100% { transform:translateX(0); } 45%, 60% { transform:translateX(3px); } 70%, 85% { transform:translateX(-3px); } }
+.eye-counter output { min-width:2ch; text-align:right; font-variant-numeric:tabular-nums; }
+
 @media (max-width: 520px) {
   .card-wrap { height:390px; }
   .solo-inner { padding-inline:22px; }
@@ -443,10 +456,11 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
 <a class="back" href="/">&larr; back</a>
 
 
+
   <div class="stage" id="stage"
-       data-user-id="1483321828838477966"
-       data-banner="https://file.garden/ap_Ebnzi9V7bLTDs/download.gif"
-       data-music="https://file.garden/ap_Ebnzi9V7bLTDs/Janice%20STFU.mp3">
+       data-user-id="1034804876733071382"
+       data-banner="https://file.garden/ap_Ebnzi9V7bLTDs/Daniel%20Wnzel%20-%20A%20set%20of%20AI%20created%20typefaces.gif"
+       data-music="https://file.garden/ap_Ebnzi9V7bLTDs/El%20De%20Las%20R's%20-%20La%20Cheyenne%20(Lyrics).mp3">
     <div class="card-wrap">
     <div class="solo-card">
       <div class="media-slot"><img class="media-img" id="media" src=""></div>
@@ -458,6 +472,19 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
           <div class="solo-status" id="statusBox"></div>
           <div class="solo-act"><span id="actName"></span><span class="a-det" id="actDet"></span></div>
         </div>
+      </div>
+      <div class="eye-counter" title="visitors" aria-label="visitor counter">
+        <svg viewBox="0 0 26 16" aria-hidden="true">
+          <g class="eye">
+            <path class="eye-lid" d="M1 8 C6 1.5, 20 1.5, 25 8 C20 14.5, 6 14.5, 1 8 Z"/>
+            <g class="eye-look">
+              <circle class="eye-iris" cx="13" cy="8" r="4.2"/>
+              <circle class="eye-pupil" cx="13" cy="8" r="2"/>
+              <circle class="eye-shine" cx="14.4" cy="6.6" r="0.8"/>
+            </g>
+          </g>
+        </svg>
+        <output id="visitCount">&middot;&middot;&middot;</output>
       </div>
     </div>
     <svg class="card-edge" aria-hidden="true"><path id="cardEdgePath" d=""/></svg>
