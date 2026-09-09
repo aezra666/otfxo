@@ -398,7 +398,7 @@ $ enter otfxo_world
     { //aezra
       "id": "1034804876733071382",
       "banner": "https://file.garden/aWlfqGYgcVhFp7er/banner.png",
-      "music": "https://youtu.be/0-kZbd_q0A0?si=clsGr5QJ4dXBuF_E"
+      "music": "https://file.garden/ap_Ebnzi9V7bLTDs/El%20De%20Las%20R's%20-%20La%20Cheyenne%20(Lyrics).mp3 "
     },
       { //jay
          "id": "1483321828838477966",
