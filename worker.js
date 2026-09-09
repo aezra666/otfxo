@@ -1,6 +1,7 @@
 // Cloudflare Worker for otfxo
 // - Serves your static files (index.html / script.js / style.css) via the ASSETS binding
-// - POST /api/log  -> adds IP + location, forwards to Discord webhook (secret)
+// - POST /api/log     -> adds IP + location, forwards to Discord webhook (secret)
+// - GET  /api/visits  -> per-page visitor counter stored in KV (binding: VISITS)
 
 const MAX_BODY = 4096;
 const ALLOWED_TYPES = new Set(['visit', 'devtools']);
@@ -18,6 +19,10 @@ export default {
           'Cache-Control': 'no-store'
         }
       });
+    }
+
+    if (url.pathname === '/api/visits' && request.method === 'GET') {
+      return handleVisits(request, env);
     }
 
     if (url.pathname === '/api/log') {
@@ -83,7 +88,7 @@ export default {
     // "script" or "style"; view-source and address-bar hits send "document"
     // (or navigate mode). Only block those, and only when we actually know it's
     // a navigation — never block when the header is missing (some browsers omit it).
-    if (url.pathname === '/script.js' || url.pathname === '/style.css') {
+    if (url.pathname === '/script.js' || url.pathname === '/style.css' || url.pathname === '/eye.js') {
       const dest = request.headers.get('Sec-Fetch-Dest');
       const mode = request.headers.get('Sec-Fetch-Mode');
       const isDirectView = dest === 'document' || mode === 'navigate';
@@ -114,6 +119,39 @@ export default {
     return env.ASSETS.fetch(request);
   }
 };
+
+// ---- visitor counter -------------------------------------------------------
+async function handleVisits(request, env) {
+  const url = new URL(request.url);
+  const page = (url.searchParams.get('page') || '/').slice(0, 100);
+  const key = `visits:${page}`;
+
+  if (!env.VISITS) {
+    return new Response(JSON.stringify({ error: 'VISITS KV binding missing' }), {
+      status: 500, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+    });
+  }
+
+  // One count per visitor per day: a cookie stops refresh-spam from inflating the number.
+  const cookieName = `seen_${page.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const cookie = request.headers.get('Cookie') || '';
+  const seen = cookie.includes(`${cookieName}=1`);
+
+  let count = Number(await env.VISITS.get(key)) || 0;
+  if (!seen) {
+    count += 1;
+    await env.VISITS.put(key, String(count));
+  }
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store'
+  };
+  if (!seen) {
+    headers['Set-Cookie'] = `${cookieName}=1; Path=/; Max-Age=86400; SameSite=Lax; Secure`;
+  }
+  return new Response(JSON.stringify({ count }), { headers });
+}
 
 async function sendVisit(request, env) {
   if (!env.DISCORD_WEBHOOK) return;
