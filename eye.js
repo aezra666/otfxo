@@ -228,53 +228,97 @@ music.addEventListener('error', () => {
   music.play().catch(() => {});
 }, { once: true });
 
-// ---- bass-reactive waveform pill (real-time, own audio only) ----
+// ---- bass-reactive waveform (real-time, own audio only) ----
 let bassInitialized = false;
-const bassPill = document.getElementById('bassPill');
+let audioCtx = null, analyser = null, gainNode = null;
+let musicMuted = false;
+const bassWave = document.getElementById('bassWave');
+
+let musicVolume = 0.5;
+
+function applyMusicOutput() {
+  music.muted = musicMuted;
+  music.volume = musicVolume;
+  if (gainNode && audioCtx) gainNode.gain.setTargetAtTime(musicMuted ? 0 : musicVolume, audioCtx.currentTime, 0.02);
+}
+
+function setMusicMuted(muted) { musicMuted = muted; applyMusicOutput(); }
+function setMusicVolume(vol) { musicVolume = Math.max(0, Math.min(1, vol)); applyMusicOutput(); }
 
 function initBassReactive(audioEl) {
   if (bassInitialized) return;
   bassInitialized = true;
+  if (!bassWave) return;
 
-  const bars = document.querySelectorAll('.bass-pill .bar');
-  if (!bars.length) return;
-
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
 
   const source = audioCtx.createMediaElementSource(audioEl);
-  const analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 64;
-  analyser.smoothingTimeConstant = 0.75;
-  source.connect(analyser);
-  analyser.connect(audioCtx.destination);
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 1024;
+  analyser.smoothingTimeConstant = 0.6;
+  gainNode = audioCtx.createGain();
+  gainNode.gain.value = musicMuted ? 0 : musicVolume;
 
-  const dataArray = new Uint8Array(analyser.frequencyBinCount);
-  const barCount = bars.length;
+  source.connect(analyser);
+  analyser.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+
+  const ctx = bassWave.getContext('2d');
+  const wave = new Uint8Array(analyser.fftSize);
+  const freq = new Uint8Array(analyser.frequencyBinCount);
+  let w = 0, h = 0;
+
+  function resize() {
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    w = bassWave.clientWidth; h = bassWave.clientHeight;
+    bassWave.width = w * ratio; bassWave.height = h * ratio;
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
 
   function loop() {
-    analyser.getByteFrequencyData(dataArray);
-    for (let i = 0; i < barCount; i++) {
-      const value = dataArray[i] / 255;
-      bars[i].style.height = `${6 + value * 20}px`;
+    analyser.getByteTimeDomainData(wave);
+    analyser.getByteFrequencyData(freq);
+    let bass = 0;
+    for (let i = 0; i < 6; i++) bass += freq[i];
+    bass = bass / 6 / 255; // 0..1 low-end energy
+
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#b980ff';
+    ctx.clearRect(0, 0, w, h);
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = accent;
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = 10 + bass * 18;
+    ctx.beginPath();
+    const mid = h / 2;
+    const amp = (h / 2 - 8) * (0.35 + bass * 1.2);
+    const step = w / (wave.length - 1);
+    for (let i = 0; i < wave.length; i++) {
+      const v = (wave[i] - 128) / 128;
+      const y = Math.max(2, Math.min(h - 2, mid + v * amp));
+      if (i === 0) ctx.moveTo(0, y); else ctx.lineTo(i * step, y);
     }
+    ctx.stroke();
     requestAnimationFrame(loop);
   }
   loop();
 }
 
-if (bassPill) {
+if (bassWave) {
   music.addEventListener('play', () => {
-    if (!bassAllowed) { bassPill.classList.remove('active'); return; }
-    bassPill.classList.add('active');
+    if (!bassAllowed) { bassWave.classList.remove('active'); return; }
+    bassWave.classList.add('active');
     try {
       initBassReactive(music);
     } catch (err) {
       console.warn('Bass visualizer unavailable:', err);
-      bassPill.classList.remove('active');
+      bassWave.classList.remove('active');
     }
   });
-  music.addEventListener('pause', () => bassPill.classList.remove('active'));
+  music.addEventListener('pause', () => bassWave.classList.remove('active'));
 }
 
 const panel = document.getElementById('intro-panel');
@@ -294,6 +338,7 @@ function setupVisualControls() {
   const crtControl = document.getElementById('crt-effect');
   const motionControl = document.getElementById('reduce-motion');
   const muteControl = document.getElementById('mute-audio');
+  const volumeControl = document.getElementById('music-volume');
   const resetControl = document.getElementById('visual-reset');
   const accentSwatches = [...document.querySelectorAll('.accent-swatch')];
   const accentPicker = document.getElementById('accent-picker');
@@ -308,6 +353,7 @@ function setupVisualControls() {
   if (saved.crt !== undefined) crtControl.checked = saved.crt;
   if (saved.motion !== undefined) motionControl.checked = saved.motion;
   if (saved.mute !== undefined) muteControl.checked = saved.mute;
+  if (saved.volume !== undefined && volumeControl) volumeControl.value = saved.volume;
   const savedAccent = saved.accent || '#b980ff';
   accentPicker.value = savedAccent;
   const savedSwatch = accentSwatches.find(swatch => swatch.dataset.accent === savedAccent);
@@ -324,11 +370,14 @@ function setupVisualControls() {
     document.documentElement.style.setProperty('--accent-color', accent);
     document.body.classList.toggle('crt-mode', crtControl.checked);
     document.body.classList.toggle('reduced-motion', motionControl.checked);
-    music.muted = muteControl.checked;
+    const volume = volumeControl ? Number(volumeControl.value) : 50;
+    setMusicVolume(volume / 100);
+    setMusicMuted(muteControl.checked);
+    if (volumeControl) document.getElementById('music-volume-value').textContent = `${volume}%`;
     document.getElementById('scene-blur-value').textContent = `${blur}px`;
     document.getElementById('card-alpha-value').textContent = `${alphaControl.value}%`;
     document.getElementById('neon-glow-value').textContent = `${glow}px`;
-    localStorage.setItem(storageKey, JSON.stringify({ blur, alpha: Number(alphaControl.value), glow, crt: crtControl.checked, motion: motionControl.checked, mute: muteControl.checked, accent }));
+    localStorage.setItem(storageKey, JSON.stringify({ blur, alpha: Number(alphaControl.value), glow, crt: crtControl.checked, motion: motionControl.checked, mute: muteControl.checked, volume, accent }));
   }
 
   toggle.addEventListener('click', () => {
@@ -338,6 +387,7 @@ function setupVisualControls() {
   blurControl.addEventListener('input', applyVisuals);
   alphaControl.addEventListener('input', applyVisuals);
   glowControl.addEventListener('input', applyVisuals);
+  if (volumeControl) volumeControl.addEventListener('input', applyVisuals);
   [crtControl, motionControl, muteControl].forEach(control => control.addEventListener('change', applyVisuals));
   accentSwatches.forEach(swatch => swatch.addEventListener('click', () => {
     accentSwatches.forEach(item => item.classList.toggle('active', item === swatch));
@@ -356,6 +406,7 @@ function setupVisualControls() {
     crtControl.checked = false;
     motionControl.checked = false;
     muteControl.checked = false;
+    if (volumeControl) volumeControl.value = 50;
     accentSwatches.forEach((swatch, index) => swatch.classList.toggle('active', index === 0));
     accentPicker.value = '#b980ff';
     applyVisuals();
