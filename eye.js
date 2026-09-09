@@ -213,8 +213,20 @@ document.getElementById('bg').style.backgroundImage = `url('${banner}')`;
 document.getElementById('media').src = banner;
 
 const music = document.getElementById('music');
+music.crossOrigin = 'anonymous'; // must be set BEFORE src so Web Audio can read the stream
 music.src = stage.dataset.music;
 music.volume = 0.5;
+
+// If the audio host refuses CORS, reload without it: plain playback, no visualizer.
+let bassAllowed = true;
+music.addEventListener('error', () => {
+  if (!bassAllowed) return;
+  bassAllowed = false;
+  music.removeAttribute('crossorigin');
+  music.src = stage.dataset.music;
+  music.load();
+  music.play().catch(() => {});
+}, { once: true });
 
 // ---- bass-reactive waveform pill (real-time, own audio only) ----
 let bassInitialized = false;
@@ -253,8 +265,14 @@ function initBassReactive(audioEl) {
 
 if (bassPill) {
   music.addEventListener('play', () => {
+    if (!bassAllowed) { bassPill.classList.remove('active'); return; }
     bassPill.classList.add('active');
-    initBassReactive(music);
+    try {
+      initBassReactive(music);
+    } catch (err) {
+      console.warn('Bass visualizer unavailable:', err);
+      bassPill.classList.remove('active');
+    }
   });
   music.addEventListener('pause', () => bassPill.classList.remove('active'));
 }
