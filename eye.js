@@ -237,8 +237,8 @@ let musicVolume = 0.5;
 const cardWrap = document.querySelector('.card-wrap');
 const soloCard = document.querySelector('.solo-card');
 const edgePath = document.getElementById('cardEdgePath');
-let waveAmp = 0, waveTarget = 0, phaseA = 0, phaseB = 0;
-const WAVE_MAX = 11; // px — keep it soft
+let waveAmp = 0, waveTarget = 0;
+const WAVE_MAX = 16; // px — soft but with a bit of bite
 
 function applyMusicOutput() {
   music.muted = musicMuted;
@@ -248,16 +248,18 @@ function applyMusicOutput() {
 function setMusicMuted(muted) { musicMuted = muted; applyMusicOutput(); }
 function setMusicVolume(vol) { musicVolume = Math.max(0, Math.min(1, vol)); applyMusicOutput(); }
 
-function buildEdgePath(W, H, amp, pA, pB) {
+const EDGE_POINTS = 96;
+let edgeSamples = new Float32Array(EDGE_POINTS + 1); // -1..1, smoothed audio along the edge
+
+function buildEdgePath(W, H, amp, samples) {
   const r = 22, base = H - amp;
   let d = `M ${r} 0 H ${W - r} A ${r} ${r} 0 0 1 ${W} ${r} V ${base - r} A ${r} ${r} 0 0 1 ${W - r} ${base}`;
-  const steps = 56, span = W - 2 * r;
-  for (let i = 1; i <= steps; i++) {
-    const t = i / steps;
+  const span = W - 2 * r;
+  for (let i = 1; i <= EDGE_POINTS; i++) {
+    const t = i / EDGE_POINTS;
     const x = (W - r) - t * span;
-    const win = Math.sin(Math.PI * t); // fades to flat at the corners
-    const off = amp * win * (0.65 * Math.sin(t * Math.PI * 3 + pA) + 0.35 * Math.sin(t * Math.PI * 6 + pB));
-    d += ` L ${x.toFixed(1)} ${(base + off).toFixed(1)}`;
+    const win = Math.sin(Math.PI * t); // flat at the corners
+    d += ` L ${x.toFixed(1)} ${(base + samples[i] * amp * win).toFixed(1)}`;
   }
   d += ` A ${r} ${r} 0 0 1 0 ${base - r} V ${r} A ${r} ${r} 0 0 1 ${r} 0 Z`;
   return d;
@@ -265,7 +267,7 @@ function buildEdgePath(W, H, amp, pA, pB) {
 
 function renderEdge() {
   if (!cardWrap || !soloCard || !edgePath) return;
-  const d = buildEdgePath(cardWrap.clientWidth, cardWrap.clientHeight, waveAmp, phaseA, phaseB);
+  const d = buildEdgePath(cardWrap.clientWidth, cardWrap.clientHeight, waveAmp, edgeSamples);
   soloCard.style.clipPath = `path('${d}')`;
   soloCard.style.webkitClipPath = `path('${d}')`;
   edgePath.setAttribute('d', d);
@@ -283,8 +285,8 @@ function initBassReactive(audioEl) {
 
   const source = audioCtx.createMediaElementSource(audioEl);
   analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 256;
-  analyser.smoothingTimeConstant = 0.85;
+  analyser.fftSize = 2048;
+  analyser.smoothingTimeConstant = 0.6;
   gainNode = audioCtx.createGain();
   gainNode.gain.value = musicMuted ? 0 : musicVolume;
 
@@ -292,18 +294,32 @@ function initBassReactive(audioEl) {
   analyser.connect(gainNode);
   gainNode.connect(audioCtx.destination);
 
+  const wave = new Uint8Array(analyser.fftSize);
   const freq = new Uint8Array(analyser.frequencyBinCount);
+  const bin = Math.floor(wave.length / EDGE_POINTS);
 
   function loop() {
+    analyser.getByteTimeDomainData(wave);
     analyser.getByteFrequencyData(freq);
-    let bass = 0;
-    for (let i = 0; i < 6; i++) bass += freq[i];
-    bass = bass / 6 / 255; // 0..1 low-end energy (0 while paused)
 
-    waveTarget = bass * WAVE_MAX;
-    waveAmp += (waveTarget - waveAmp) * 0.1; // eased so it never jerks
-    phaseA += 0.018 + bass * 0.04;
-    phaseB -= 0.012 + bass * 0.03;
+    // real waveform: average each slice of samples, then lightly smooth across neighbours
+    for (let i = 0; i <= EDGE_POINTS; i++) {
+      const start = Math.min(i * bin, wave.length - bin);
+      let sum = 0;
+      for (let j = 0; j < bin; j++) sum += wave[start + j] - 128;
+      const v = sum / bin / 128; // -1..1
+      edgeSamples[i] += (v - edgeSamples[i]) * 0.6; // snappier follow
+    }
+    for (let i = 1; i < EDGE_POINTS; i++) edgeSamples[i] = (edgeSamples[i - 1] + edgeSamples[i] * 6 + edgeSamples[i + 1]) / 8; // lighter smoothing → small spikes
+
+    // loudness (with a bass lift) sets how far the edge is allowed to move
+    let level = 0, bass = 0;
+    for (let i = 0; i < freq.length; i++) level += freq[i];
+    for (let i = 0; i < 8; i++) bass += freq[i];
+    level = level / freq.length / 255; bass = bass / 8 / 255;
+    waveTarget = Math.min(1, level * 1.6 + bass * 0.9) * WAVE_MAX;
+    waveAmp += (waveTarget - waveAmp) * 0.15;
+
     renderEdge();
     requestAnimationFrame(loop);
   }
