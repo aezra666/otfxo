@@ -228,35 +228,63 @@ music.addEventListener('error', () => {
   music.play().catch(() => {});
 }, { once: true });
 
-// ---- bass-reactive waveform (real-time, own audio only) ----
+// ---- bass-reactive card edge: the card's bottom border softly waves with the music ----
 let bassInitialized = false;
 let audioCtx = null, analyser = null, gainNode = null;
 let musicMuted = false;
-const bassWave = document.getElementById('bassWave');
-
 let musicVolume = 0.5;
+
+const cardWrap = document.querySelector('.card-wrap');
+const soloCard = document.querySelector('.solo-card');
+const edgePath = document.getElementById('cardEdgePath');
+let waveAmp = 0, waveTarget = 0, phaseA = 0, phaseB = 0;
+const WAVE_MAX = 11; // px — keep it soft
 
 function applyMusicOutput() {
   music.muted = musicMuted;
   music.volume = musicVolume;
   if (gainNode && audioCtx) gainNode.gain.setTargetAtTime(musicMuted ? 0 : musicVolume, audioCtx.currentTime, 0.02);
 }
-
 function setMusicMuted(muted) { musicMuted = muted; applyMusicOutput(); }
 function setMusicVolume(vol) { musicVolume = Math.max(0, Math.min(1, vol)); applyMusicOutput(); }
+
+function buildEdgePath(W, H, amp, pA, pB) {
+  const r = 22, base = H - amp;
+  let d = `M ${r} 0 H ${W - r} A ${r} ${r} 0 0 1 ${W} ${r} V ${base - r} A ${r} ${r} 0 0 1 ${W - r} ${base}`;
+  const steps = 56, span = W - 2 * r;
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    const x = (W - r) - t * span;
+    const win = Math.sin(Math.PI * t); // fades to flat at the corners
+    const off = amp * win * (0.65 * Math.sin(t * Math.PI * 3 + pA) + 0.35 * Math.sin(t * Math.PI * 6 + pB));
+    d += ` L ${x.toFixed(1)} ${(base + off).toFixed(1)}`;
+  }
+  d += ` A ${r} ${r} 0 0 1 0 ${base - r} V ${r} A ${r} ${r} 0 0 1 ${r} 0 Z`;
+  return d;
+}
+
+function renderEdge() {
+  if (!cardWrap || !soloCard || !edgePath) return;
+  const d = buildEdgePath(cardWrap.clientWidth, cardWrap.clientHeight, waveAmp, phaseA, phaseB);
+  soloCard.style.clipPath = `path('${d}')`;
+  soloCard.style.webkitClipPath = `path('${d}')`;
+  edgePath.setAttribute('d', d);
+}
+renderEdge();
+window.addEventListener('resize', renderEdge);
 
 function initBassReactive(audioEl) {
   if (bassInitialized) return;
   bassInitialized = true;
-  if (!bassWave) return;
+  if (!edgePath) return;
 
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
 
   const source = audioCtx.createMediaElementSource(audioEl);
   analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 1024;
-  analyser.smoothingTimeConstant = 0.6;
+  analyser.fftSize = 256;
+  analyser.smoothingTimeConstant = 0.85;
   gainNode = audioCtx.createGain();
   gainNode.gain.value = musicMuted ? 0 : musicVolume;
 
@@ -264,62 +292,29 @@ function initBassReactive(audioEl) {
   analyser.connect(gainNode);
   gainNode.connect(audioCtx.destination);
 
-  const ctx = bassWave.getContext('2d');
-  const wave = new Uint8Array(analyser.fftSize);
   const freq = new Uint8Array(analyser.frequencyBinCount);
-  let w = 0, h = 0;
-
-  function resize() {
-    const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    w = bassWave.clientWidth; h = bassWave.clientHeight;
-    bassWave.width = w * ratio; bassWave.height = h * ratio;
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  }
-  resize();
-  window.addEventListener('resize', resize);
 
   function loop() {
-    analyser.getByteTimeDomainData(wave);
     analyser.getByteFrequencyData(freq);
     let bass = 0;
     for (let i = 0; i < 6; i++) bass += freq[i];
-    bass = bass / 6 / 255; // 0..1 low-end energy
+    bass = bass / 6 / 255; // 0..1 low-end energy (0 while paused)
 
-    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#b980ff';
-    ctx.clearRect(0, 0, w, h);
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = accent;
-    ctx.shadowColor = accent;
-    ctx.shadowBlur = 10 + bass * 18;
-    ctx.beginPath();
-    const mid = h / 2;
-    const amp = (h / 2 - 8) * (0.35 + bass * 1.2);
-    const step = w / (wave.length - 1);
-    for (let i = 0; i < wave.length; i++) {
-      const v = (wave[i] - 128) / 128;
-      const y = Math.max(2, Math.min(h - 2, mid + v * amp));
-      if (i === 0) ctx.moveTo(0, y); else ctx.lineTo(i * step, y);
-    }
-    ctx.stroke();
+    waveTarget = bass * WAVE_MAX;
+    waveAmp += (waveTarget - waveAmp) * 0.1; // eased so it never jerks
+    phaseA += 0.018 + bass * 0.04;
+    phaseB -= 0.012 + bass * 0.03;
+    renderEdge();
     requestAnimationFrame(loop);
   }
   loop();
 }
 
-if (bassWave) {
-  music.addEventListener('play', () => {
-    if (!bassAllowed) { bassWave.classList.remove('active'); return; }
-    bassWave.classList.add('active');
-    try {
-      initBassReactive(music);
-    } catch (err) {
-      console.warn('Bass visualizer unavailable:', err);
-      bassWave.classList.remove('active');
-    }
-  });
-  music.addEventListener('pause', () => bassWave.classList.remove('active'));
-}
+music.addEventListener('play', () => {
+  if (!bassAllowed) return;
+  try { initBassReactive(music); }
+  catch (err) { console.warn('Bass visualizer unavailable:', err); }
+});
 
 const panel = document.getElementById('intro-panel');
 const content = document.querySelector('.intro-content');
