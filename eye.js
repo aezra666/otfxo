@@ -216,6 +216,38 @@ const music = document.getElementById('music');
 music.src = stage.dataset.music;
 music.volume = 0.5;
 
+// ---- bass-reactive personal-card pill (real-time, own audio only) ----
+let bassInitialized = false;
+
+function initBassReactive(audioEl) {
+  if (bassInitialized) return;
+  bassInitialized = true;
+
+  const pill = document.querySelector('.bass-indicator'); // TODO: swap for your real pill selector
+  if (!pill) return;
+
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const source = audioCtx.createMediaElementSource(audioEl);
+  const analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 256;
+  source.connect(analyser);
+  analyser.connect(audioCtx.destination);
+
+  const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+  function loop() {
+    analyser.getByteFrequencyData(dataArray);
+    const bassAvg = dataArray.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
+    const bassNorm = bassAvg / 255;
+    pill.style.transform = `scaleX(${1 + bassNorm * 0.8})`;
+    pill.style.boxShadow = `0 0 ${bassNorm * 20}px rgba(185,128,255,${bassNorm})`;
+    requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+music.addEventListener('play', () => initBassReactive(music), { once: true });
+
 const panel = document.getElementById('intro-panel');
 const content = document.querySelector('.intro-content');
 const typewriter = document.querySelector('.intro-typewriter');
