@@ -16,7 +16,7 @@ run_worker_first = true
 # then paste the id it prints below.
 [[kv_namespaces]]
 binding = "VISITS"
-id = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
+id = "5f82688c97e14463bbb8d419a3e2cd0d"
 
 # DISCORD_WEBHOOK is a secret, NOT set here. Add it with:
 #   npx wrangler secret put DISCORD_WEBHOOK
