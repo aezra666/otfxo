@@ -3,13 +3,20 @@ main = "worker.js"
 compatibility_date = "2025-01-01"
 keep_vars = true
 
-# Serve index.html / script.js / style.css from the repo root.
+# Serve index.html / eye.js / style.css from the repo root.
 # run_worker_first = true runs worker.js on every request (needed for visit logging),
 # then it hands non-API requests to the static files.
 [assets]
 directory = "./"
 binding = "ASSETS"
 run_worker_first = true
+
+# Visitor counter storage. Create the namespace once with:
+#   npx wrangler kv namespace create VISITS
+# then paste the id it prints below.
+[[kv_namespaces]]
+binding = "VISITS"
+id = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
 
 # DISCORD_WEBHOOK is a secret, NOT set here. Add it with:
 #   npx wrangler secret put DISCORD_WEBHOOK
