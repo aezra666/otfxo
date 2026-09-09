@@ -1,5 +1,78 @@
    const logged = new Set();
 
+  function createMainParticleField() {
+    const canvas = document.createElement('canvas');
+    canvas.setAttribute('aria-hidden', 'true');
+    canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;mix-blend-mode:screen;';
+    document.body.appendChild(canvas);
+
+    const context = canvas.getContext('2d');
+    const particles = [];
+    let width = 0;
+    let height = 0;
+
+    function resize() {
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * ratio;
+      canvas.height = height * ratio;
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function resetParticle(particle, initial = false) {
+      particle.x = Math.random() * width;
+      particle.y = Math.random() * height;
+      particle.previousX = particle.x;
+      particle.previousY = particle.y;
+      particle.radius = Math.random() * 1.4 + 0.4;
+      particle.vx = (Math.random() - 0.5) * 0.16;
+      particle.vy = (Math.random() - 0.5) * 0.16;
+      particle.maxLife = Math.random() * 500 + 500;
+      particle.life = initial ? Math.random() * particle.maxLife : particle.maxLife;
+      particle.opacity = Math.random() * 0.5 + 0.2;
+      particle.color = Math.random() > 0.72 ? '180, 120, 255' : '255, 255, 255';
+    }
+
+    function draw() {
+      context.clearRect(0, 0, width, height);
+      for (const particle of particles) {
+        particle.previousX = particle.x;
+        particle.previousY = particle.y;
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        particle.life -= 1;
+        if (particle.x < -8 || particle.x > width + 8 || particle.y < -8 || particle.y > height + 8 || particle.life <= 0) resetParticle(particle);
+        const lifeProgress = particle.life / particle.maxLife;
+        const fade = Math.min(1, lifeProgress * 5, (1 - lifeProgress) * 5);
+        const opacity = particle.opacity * Math.max(0, fade);
+        context.beginPath();
+        context.strokeStyle = `rgba(${particle.color}, ${opacity * 0.35})`;
+        context.lineWidth = particle.radius * 1.4;
+        context.moveTo(particle.previousX - particle.vx * 8, particle.previousY - particle.vy * 8);
+        context.lineTo(particle.x, particle.y);
+        context.stroke();
+        context.beginPath();
+        context.fillStyle = `rgba(${particle.color}, ${opacity})`;
+        context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        context.fill();
+      }
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    const particleCount = Math.min(90, Math.max(35, Math.floor((width * height) / 18000)));
+    for (let index = 0; index < particleCount; index++) {
+      const particle = {};
+      resetParticle(particle, true);
+      particles.push(particle);
+    }
+    draw();
+  }
+
+  createMainParticleField();
+
   function logEvent(type, extra = {}) {
     if (logged.has(type)) return; // once per page load per type
     logged.add(type);
@@ -77,7 +150,7 @@
 
   let isTyping = false;
 
-  function typeWriter(element, text, speed = 40, callback = null, gutterElement = null) {
+  function typeWriter(element, text, speed = 20, callback = null, gutterElement = null) {
     const scrambleCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%€&/.,<>';
     const characters = [...text];
     const okCharacterIndexes = new Set();
@@ -205,7 +278,7 @@
   }
 
   window.addEventListener('load', () => {
-    const consoleReadKey = 'otfxo-console-read-v3';
+    const consoleReadKey = `otfxo-console-read-v3:${location.pathname}`;
     const introPanel = document.getElementById('intro-panel');
     const introContent = document.querySelector('.intro-content');
     const introTypewriter = document.querySelector('.intro-typewriter');
@@ -262,7 +335,7 @@ $ client info
 $ enter otfxo_world
 > welcome`;
 
-        typeWriter(introTypewriter, consoleText, 14, () => {
+        typeWriter(introTypewriter, consoleText, 1, () => {
           setTimeout(() => {
             introPanel.classList.add('hidden');
           }, 700);
@@ -328,8 +401,11 @@ $ enter otfxo_world
       "music": "https://file.garden/aWlfqGYgcVhFp7er/vxc.mp3"
     },
       {
-         "id": "1483321828838477966"
-      }
+         "id": "1483321828838477966",
+         "banner": "https://file.garden/ap_Ebnzi9V7bLTDs/download.gif",
+         "music": "https://file.garden/aWlfqGYgcVhFp7er/vxc.mp3"
+      },
+
   ];
 
   async function fetchDiscordInfoMembers(discordId) {
@@ -670,7 +746,7 @@ document.querySelectorAll('.card').forEach(card => {
   card.addEventListener('click', () => {
     const pages = {
       '1034804876733071382': 'aezra.html',
-      '1483321828838477966': 'member2.html'
+      '1483321828838477966': 'jay.html'
     };
     const page = pages[card.dataset.userId];
     if (page) window.location.href = page;

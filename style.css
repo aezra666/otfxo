@@ -14,20 +14,13 @@ html {
 }
 
 body {
-    background: blur;
-  background-image: none;
+  color: #ffffff;
+  background: #070606;
+  background-image: url("https://file.garden/ap_Ebnzi9V7bLTDs/6212485181ca055f760855d98d3ee4bc.gif");
   background-position: center;
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-attachment: fixed;
-  min-width: 100%;
-  min-height: 100vh;
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    color: rgb(107, 42, 42);
 }
 
 body::before {
@@ -322,9 +315,9 @@ body::before {
 }.blur-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(7px);
-  -webkit-backdrop-filter: blur(7px);
+  background: rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   pointer-events: none;
   z-index: 0;
 }

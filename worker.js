@@ -9,6 +9,17 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
+    if (url.pathname === '/api/my-ip' && request.method === 'GET') {
+      const ip = request.headers.get('cf-connecting-ip') || 'unavailable';
+      return new Response(JSON.stringify({ ip }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
+
     if (url.pathname === '/api/log') {
       // Debug: open /api/log?test=1 in a browser to send a test message
       // and see exactly what Discord replies.
