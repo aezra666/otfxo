@@ -348,7 +348,7 @@ body::before {
   position: relative;
   width: min(330px, calc(100vw - 32px));
   height: 410px;
-  border-radius: 22px; overflow: hidden;
+  border-radius: 22px; overflow: visible;
   background: rgb(8 9 12 / var(--card-alpha, 0.38));
   border: 1px solid color-mix(in srgb, var(--accent-color, #b980ff) 72%, transparent);
   backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
@@ -357,9 +357,9 @@ body::before {
   transition: transform 0.8s cubic-bezier(.2,.8,.2,1);
 }
 .stage.show .solo-card { transform: translateY(0) scale(1); }
-.solo-card .media-slot { position:absolute; inset:0; z-index:1; overflow:hidden; }
+.solo-card .media-slot { position:absolute; inset:0; z-index:1; overflow:hidden; border-radius:22px; }
 .solo-card .media-img { display:none; }
-.solo-card::after { content:''; position:absolute; inset:0; z-index:2; background:transparent; pointer-events:none; }
+.solo-card::after { content:''; position:absolute; inset:0; z-index:2; background:transparent; pointer-events:none; border-radius:22px; }
 .solo-inner { position:relative; z-index:3; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:34px 28px 28px; gap:18px; text-align:center; }
 .solo-avatar { position:relative; width:118px; height:118px; border-radius:50%; background:#111; flex-shrink:0; border:2px solid var(--accent-color, #b980ff); box-shadow:0 0 0 7px color-mix(in srgb, var(--accent-color, #b980ff) 22%, transparent), 0 0 var(--neon-glow, 28px) color-mix(in srgb, var(--accent-color, #b980ff) 46%, transparent), 0 14px 34px rgba(0,0,0,0.42); }
 .solo-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
@@ -373,6 +373,38 @@ body::before {
 .solo-act .a-det { display:block; font-size:11px; opacity:0.6; }
 .back { position:fixed; top:18px; left:18px; z-index:60; color:#5a6472; text-decoration:none; font-size:0.8rem; }
 .back:hover { color:#fff; }
+
+/* bass-reactive waveform pill — hangs off the bottom edge, same accent/glow as the card */
+.bass-pill {
+  position: absolute;
+  left: 50%;
+  bottom: -20px;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 68px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgb(8 9 12 / var(--card-alpha, 0.38));
+  border: 1px solid color-mix(in srgb, var(--accent-color, #b980ff) 72%, transparent);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 0 var(--neon-glow, 28px) color-mix(in srgb, var(--accent-color, #b980ff) 48%, transparent), 0 10px 24px rgba(0,0,0,0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.bass-pill.active { opacity: 1; }
+.bass-pill .bar {
+  width: 3px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--accent-color, #b980ff);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent-color, #b980ff) 70%, transparent);
+  transition: height 0.08s ease;
+}
 
 .visual-tools { position:fixed; top:18px; left:86px; z-index:60; }
 .visual-toggle { width:36px; height:36px; border:1px solid rgba(255,255,255,0.28); border-radius:10px; background:rgba(8,9,12,0.58); color:#fff; cursor:pointer; font-size:17px; backdrop-filter:blur(12px); transition:transform 0.35s ease, background 0.35s ease, box-shadow 0.35s ease; }
@@ -447,6 +479,13 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
           <div class="solo-status" id="statusBox"></div>
           <div class="solo-act"><span id="actName"></span><span class="a-det" id="actDet"></span></div>
         </div>
+      </div>
+      <div class="bass-pill" id="bassPill">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
       </div>
     </div>
   </div>
