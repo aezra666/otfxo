@@ -1,4 +1,4 @@
-   const logged = new Set();
+  const logged = new Set();
 
   function createMainParticleField() {
     const canvas = document.createElement('canvas');
@@ -488,6 +488,61 @@ function renderDiscordEmoji(emoji) {
   return emoji.name || "";
 }
 
+// ---- status/bio animation: type -> hold 5s -> shuffle -> dissolve -> repeat ----
+const bioChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{};:<>,.?/|~`\\⊙◊≠∞§¶†‡•°±×÷€£¥';
+const bioRand = () => bioChars[Math.floor(Math.random() * bioChars.length)];
+
+function bioDecodeIn(el, text, emojiHTML, speed = 90, onDone = null) {
+  el.replaceChildren();
+  if (emojiHTML) {                       // custom (image) emoji: shown in front while text types in
+    const wrap = document.createElement('span');
+    wrap.className = 'bio-emoji';
+    wrap.innerHTML = emojiHTML;
+    el.appendChild(wrap);
+  }
+  const characters = [...text];
+  let i = 0;
+  function next() {
+    if (i >= characters.length) { if (onDone) onDone(); return; }
+    const ch = characters[i];
+    const node = document.createElement('span');
+    node.className = 'scramble-character';
+    el.appendChild(node);
+    if (ch === ' ') { node.textContent = '\u00a0'; i++; setTimeout(next, speed); return; }
+    node.classList.add('letter-shake');
+    let tick = 0;
+    const iv = setInterval(() => {
+      node.textContent = bioRand();
+      if (++tick >= 8) {
+        clearInterval(iv); node.textContent = ch; node.classList.remove('letter-shake');
+        i++; setTimeout(next, speed);
+      }
+    }, 45);
+  }
+  next();
+}
+
+function bioScrambleOut(el, text, duration = 1800, onDone = null) {
+  const nodes = el.querySelectorAll('.scramble-character');
+  const emojiWrap = el.querySelector('.bio-emoji');
+  const characters = [...text];
+  const start = performance.now();
+  const lockAt = characters.map((_, i) => duration * (0.55 + 0.45 * (i / characters.length)));
+  function frame(now) {
+    const t = now - start;
+    let done = true;
+    nodes.forEach((node, i) => {
+      if (characters[i] === ' ') return;
+      if (t < lockAt[i]) { node.textContent = bioRand(); done = false; }
+      else node.textContent = '';
+    });
+    if (emojiWrap) emojiWrap.style.opacity = t < duration * 0.55 ? (Math.random() > 0.5 ? '1' : '0.2') : '0';
+    if (!done) requestAnimationFrame(frame);
+    else if (onDone) onDone();
+  }
+  requestAnimationFrame(frame);
+}
+
 const activityIcons = {
   "Roblox": "https://www.roblox.com/favicon.ico",
   "Visual Studio Code": "https://code.visualstudio.com/favicon.ico",
@@ -551,6 +606,35 @@ document.querySelectorAll(".card").forEach(card => {
   const spotifyArtist = card.querySelector(".spotify-artist");
   const spotifyProgressFill = card.querySelector(".spotify-progress-fill");
   const spotifyContainer = card.querySelector(".spotify-container");
+
+  // animated status box, fed by the same Lanyard data as everything else
+  let bioText = '';
+  let bioEmoji = '';
+  let bioRunning = false;
+
+  function bioLoop() {
+    if (!bioText) { bioRunning = false; statusBox.replaceChildren(); return; }
+    const text = bioText, emoji = bioEmoji;
+    bioDecodeIn(statusBox, text, emoji, 90, () => {
+      setTimeout(() => {
+        bioScrambleOut(statusBox, text, 1800, () => {
+          statusBox.replaceChildren();
+          setTimeout(bioLoop, 400);
+        });
+      }, 5000);
+    });
+  }
+
+  function setBio(customStatus) {
+    // unicode emoji becomes the first character and scrambles with the text;
+    // custom image emoji is rendered as <img> in front
+    const unicode = customStatus?.emoji && !customStatus.emoji.id ? customStatus.emoji.name : '';
+    const text = ((unicode ? unicode + ' ' : '') + (customStatus?.state || '')).trim().toUpperCase();
+    const emoji = customStatus?.emoji?.id ? renderDiscordEmoji(customStatus.emoji) : '';
+    if (text === bioText && emoji === bioEmoji) return;   // unchanged -> keep current loop
+    bioText = text; bioEmoji = emoji;
+    if (!bioRunning) { bioRunning = true; bioLoop(); }
+  }
 
   const ws = new WebSocket("wss://api.lanyard.rest/socket");
   let heartbeatTimer = null;
@@ -634,7 +718,7 @@ document.querySelectorAll(".card").forEach(card => {
 
       statusDot.className = `status-dot status-${user.discord_status || 'offline'}`;
       const customStatus = user.activities?.find(activity => activity.type === 4);
-      statusBox.textContent = customStatus?.state || '';
+      setBio(customStatus);
       renderActivities(user.activities);
       renderSpotify(user.spotify);
     } catch (error) {
@@ -677,12 +761,7 @@ document.querySelectorAll(".card").forEach(card => {
     statusDot.className = `status-dot status-${user.discord_status}`;
 
     const customStatus = user.activities?.find(a => a.type === 4);
-    if (customStatus && (customStatus.emoji || customStatus.state)) {
-      const emoji = renderDiscordEmoji(customStatus.emoji) || "";
-      const state = customStatus.state || "";
-      statusBox.innerHTML = emoji + state;
-    } else {
-    }
+    setBio(customStatus);
 
     renderActivities(user.activities);
 
