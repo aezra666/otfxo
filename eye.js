@@ -216,37 +216,48 @@ const music = document.getElementById('music');
 music.src = stage.dataset.music;
 music.volume = 0.5;
 
-// ---- bass-reactive personal-card pill (real-time, own audio only) ----
+// ---- bass-reactive waveform pill (real-time, own audio only) ----
 let bassInitialized = false;
+const bassPill = document.getElementById('bassPill');
 
 function initBassReactive(audioEl) {
   if (bassInitialized) return;
   bassInitialized = true;
 
-  const pill = document.querySelector('.bass-indicator'); // TODO: swap for your real pill selector
-  if (!pill) return;
+  const bars = document.querySelectorAll('.bass-pill .bar');
+  if (!bars.length) return;
 
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
   const source = audioCtx.createMediaElementSource(audioEl);
   const analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 256;
+  analyser.fftSize = 64;
+  analyser.smoothingTimeConstant = 0.75;
   source.connect(analyser);
   analyser.connect(audioCtx.destination);
 
   const dataArray = new Uint8Array(analyser.frequencyBinCount);
+  const barCount = bars.length;
 
   function loop() {
     analyser.getByteFrequencyData(dataArray);
-    const bassAvg = dataArray.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
-    const bassNorm = bassAvg / 255;
-    pill.style.transform = `scaleX(${1 + bassNorm * 0.8})`;
-    pill.style.boxShadow = `0 0 ${bassNorm * 20}px rgba(185,128,255,${bassNorm})`;
+    for (let i = 0; i < barCount; i++) {
+      const value = dataArray[i] / 255;
+      bars[i].style.height = `${6 + value * 20}px`;
+    }
     requestAnimationFrame(loop);
   }
   loop();
 }
 
-music.addEventListener('play', () => initBassReactive(music), { once: true });
+if (bassPill) {
+  music.addEventListener('play', () => {
+    bassPill.classList.add('active');
+    initBassReactive(music);
+  });
+  music.addEventListener('pause', () => bassPill.classList.remove('active'));
+}
 
 const panel = document.getElementById('intro-panel');
 const content = document.querySelector('.intro-content');
