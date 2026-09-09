@@ -326,11 +326,30 @@ function initBassReactive(audioEl) {
   loop();
 }
 
+function resumeAudioGraph() {
+  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
+}
+
 music.addEventListener('play', () => {
+  resumeAudioGraph();
   if (!bassAllowed) return;
   try { initBassReactive(music); }
   catch (err) { console.warn('Bass visualizer unavailable:', err); }
 });
+
+// Coming back to the page (back button, tab switch, lock screen): iOS suspends the
+// audio graph and pauses media. Wake both up again instead of needing a reload.
+function wakeMusic() {
+  resumeAudioGraph();
+  if (stage.classList.contains('show') && music.paused) music.play().catch(() => {});
+}
+window.addEventListener('pageshow', event => { if (event.persisted) wakeMusic(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wakeMusic(); });
+window.addEventListener('focus', wakeMusic);
+// If autoplay is blocked on return, the next tap anywhere restarts it.
+document.addEventListener('pointerdown', () => {
+  if (stage.classList.contains('show')) wakeMusic();
+}, { passive: true });
 
 const panel = document.getElementById('intro-panel');
 const content = document.querySelector('.intro-content');
