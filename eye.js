@@ -53,6 +53,71 @@ function typeWriter(element, text, speed = 40, callback = null, gutterElement = 
   revealNext();
 }
 
+// ---- animated bio: type -> hold 5s -> shuffle -> dissolve -> loop ----
+const bioChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{};:<>,.?/|~`\\\u2299\u25ca\u2260\u221e\u00a7\u00b6\u2020\u2021\u2022\u00b0\u00b1\u00d7\u00f7\u20ac\u00a3\u00a5';
+const bioRand = () => bioChars[Math.floor(Math.random() * bioChars.length)];
+let bioText = '', bioRunning = false;
+
+function bioDecodeIn(el, text, onDone) {
+  el.replaceChildren();
+  const characters = [...text];
+  let i = 0;
+  (function next() {
+    if (i >= characters.length) { if (onDone) onDone(); return; }
+    const ch = characters[i];
+    const node = document.createElement('span');
+    node.className = 'scramble-character';
+    el.appendChild(node);
+    if (ch === ' ') { node.textContent = '\u00a0'; i++; setTimeout(next, 90); return; }
+    node.classList.add('letter-shake');
+    let tick = 0;
+    const iv = setInterval(() => {
+      node.textContent = bioRand();
+      if (++tick >= 8) { clearInterval(iv); node.textContent = ch; node.classList.remove('letter-shake'); i++; setTimeout(next, 90); }
+    }, 45);
+  })();
+}
+
+function bioScrambleOut(el, text, onDone) {
+  const nodes = el.querySelectorAll('.scramble-character');
+  const characters = [...text];
+  const start = performance.now();
+  const lockAt = characters.map((_, i) => 1800 * (0.55 + 0.45 * (i / characters.length)));
+  requestAnimationFrame(function frame(now) {
+    const t = now - start;
+    let done = true;
+    nodes.forEach((node, i) => {
+      if (characters[i] === ' ') return;
+      if (t < lockAt[i]) { node.textContent = bioRand(); done = false; }
+      else node.textContent = '';
+    });
+    if (!done) requestAnimationFrame(frame);
+    else if (onDone) onDone();
+  });
+}
+
+function bioLoop() {
+  const box = document.getElementById('statusBox');
+  if (!box) { bioRunning = false; return; }
+  if (!bioText) { bioRunning = false; box.replaceChildren(); return; }
+  const text = bioText;
+  bioDecodeIn(box, text, () => {
+    setTimeout(() => {
+      bioScrambleOut(box, text, () => {
+        box.replaceChildren();
+        setTimeout(bioLoop, 400);
+      });
+    }, 5000);
+  });
+}
+
+function setBio(state) {
+  const text = (state || '').trim().toUpperCase();
+  if (text === bioText) return;      // unchanged -> keep current loop
+  bioText = text;
+  if (!bioRunning) { bioRunning = true; bioLoop(); }
+}
+
 const soloDevtoolsLogged = new Set();
 
 function logSoloDevtools(how) {
@@ -263,16 +328,16 @@ window.addEventListener('load', () => {
     proceedButton.style.display = 'none';
     const ownIp = await loadOwnIp();
     const consoleText = `$ ssh otfxo@world --user=guest
-connecting...
+     connecting...
 [OK] handshake complete
-$ otfxoctl status
-scanning the family...
+     $ otfxoctl status
+     scanning the family...
 [OK] 1 otfxo counted
 [OK] 1 otfxo awake
-$ client info
+     $ client info
 [OK] loading profile...
 [OK] ip: ${ownIp}
-$ enter otfxo_world
+     $ enter otfxo_world
 > welcome`;
     typeWriter(typewriter, consoleText, 1, () => {
       setTimeout(() => {
@@ -300,7 +365,7 @@ async function loadProfile() {
     document.getElementById('name').textContent = discordUser.global_name || discordUser.username || 'Unknown';
     document.getElementById('uname').textContent = '@' + (discordUser.username || '');
     document.getElementById('dot').className = `solo-dot status-${user.discord_status || 'offline'}`;
-    document.getElementById('statusBox').textContent = user.activities?.find(activity => activity.type === 4)?.state || '';
+    setBio(user.activities?.find(activity => activity.type === 4)?.state);
     const activity = user.activities?.find(activity => activity.type !== 4 && activity.name !== 'Spotify');
     document.getElementById('actName').textContent = activity?.name || '';
     document.getElementById('actDet').textContent = activity
