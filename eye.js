@@ -536,5 +536,18 @@ async function loadOwnIp() {
   }
 }
 
+async function loadVisitCount() {
+  const out = document.getElementById('visitCount');
+  if (!out) return;
+  try {
+    const response = await fetch(`/api/visits?page=${encodeURIComponent(location.pathname)}`, { cache: 'no-store' });
+    const data = await response.json();
+    if (typeof data.count === 'number') out.textContent = data.count.toLocaleString();
+  } catch {
+    out.textContent = '\u2014';
+  }
+}
+
 loadProfile();
 setInterval(loadProfile, 15000);
+loadVisitCount();
