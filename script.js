@@ -395,12 +395,12 @@ $ enter otfxo_world
   };
 
    const discordUsers = [
-    {
+    { //aezra
       "id": "1034804876733071382",
       "banner": "https://file.garden/aWlfqGYgcVhFp7er/banner.png",
-      "music": "https://file.garden/aWlfqGYgcVhFp7er/vxc.mp3"
+      "music": "https://youtu.be/0-kZbd_q0A0?si=clsGr5QJ4dXBuF_E"
     },
-      {
+      { //jay
          "id": "1483321828838477966",
          "banner": "https://file.garden/ap_Ebnzi9V7bLTDs/download.gif",
          "music": "https://file.garden/aWlfqGYgcVhFp7er/vxc.mp3"
