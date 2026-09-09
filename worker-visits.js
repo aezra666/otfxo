@@ -14,8 +14,9 @@ export async function handleVisits(request, env) {
   const key = `visits:${page}`;
 
   // One count per visitor per day: a cookie stops refresh-spam from inflating the number.
+  const cookieName = `seen_${page.replace(/[^a-zA-Z0-9]/g, '_')}`;
   const cookie = request.headers.get('Cookie') || '';
-  const seen = cookie.includes(`seen_${btoa(page).replace(/=+$/, '')}=1`);
+  const seen = cookie.includes(`${cookieName}=1`);
 
   let count = Number(await env.VISITS.get(key)) || 0;
   if (!seen) {
@@ -28,7 +29,7 @@ export async function handleVisits(request, env) {
     'Cache-Control': 'no-store'
   };
   if (!seen) {
-    headers['Set-Cookie'] = `seen_${btoa(page).replace(/=+$/, '')}=1; Path=/; Max-Age=86400; SameSite=Lax; Secure`;
+    headers['Set-Cookie'] = `${cookieName}=1; Path=/; Max-Age=86400; SameSite=Lax; Secure`;
   }
   return new Response(JSON.stringify({ count }), { headers });
 }
