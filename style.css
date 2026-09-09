@@ -868,3 +868,33 @@ html, body {
   }
 }
 
+/* ---- animated status / bio (type -> hold -> shuffle -> dissolve -> loop) ---- */
+.status-box {
+  letter-spacing: 2px;
+  min-height: 1.4em;
+}
+
+.status-box .scramble-character {
+  display: inline-block;
+  min-width: 0.55ch;
+}
+
+.status-box .scramble-character.letter-shake {
+  animation: bio-shake 0.08s linear infinite;
+}
+
+.status-box .bio-emoji {
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: middle;
+  transition: opacity 0.1s;
+}
+
+@keyframes bio-shake {
+  0%   { transform: translate(0, 0); }
+  20%  { transform: translate(-3px, 2px) rotate(-3deg); }
+  40%  { transform: translate(3px, -2px) rotate(3deg); }
+  60%  { transform: translate(-3px, -2px) rotate(-2deg); }
+  80%  { transform: translate(3px, 2px) rotate(2deg); }
+  100% { transform: translate(0, 0); }
+}
