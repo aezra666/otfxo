@@ -110,9 +110,15 @@ export default {
     // Serve the HTML minified: collapse whitespace and strip comments so
     // Page Source shows one unreadable line instead of clean markup.
     if (isPage) {
-      const assetRequest = assetPath === url.pathname
-        ? request
-        : new Request(new URL(assetPath, url), request);
+      const assetHeaders = new Headers(request.headers);
+      assetHeaders.delete('Sec-Fetch-Dest');
+      assetHeaders.delete('Sec-Fetch-Mode');
+      assetHeaders.delete('Sec-Fetch-Site');
+      assetHeaders.delete('Sec-Fetch-User');
+      const assetRequest = new Request(new URL(assetPath, url), {
+        method: request.method,
+        headers: assetHeaders
+      });
       const assetRes = await env.ASSETS.fetch(assetRequest);
       let html = await assetRes.text();
       html = html
