@@ -123,6 +123,7 @@ export default {
       let html = await assetRes.text();
       html = html
         .replace(/<!--[\s\S]*?-->/g, '')        // drop HTML comments
+        .replace(/(<style[^>]*>)([\s\S]*?)(<\/style>)/gi, (_, open, css, close) => `${open}${minifyCss(css)}${close}`)
         .replace(/\n\s*/g, '')                    // remove line breaks + indentation
         .replace(/>\s+</g, '><')                  // squeeze space between tags
         .trim();
@@ -138,6 +139,15 @@ export default {
     return env.ASSETS.fetch(request);
   }
 };
+
+function minifyCss(css) {
+  return css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s*([{}:;,>+~])\s*/g, '$1')
+    .replace(/;}/g, '}')
+    .trim();
+}
 
 // ---- visitor counter -------------------------------------------------------
 async function handleVisits(request, env) {
