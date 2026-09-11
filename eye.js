@@ -215,8 +215,8 @@ if (copyLinkButton) {
       document.execCommand('copy');
       helper.remove();
     }
-    copyLinkButton.textContent = 'Copied';
-    setTimeout(() => { copyLinkButton.textContent = 'Copy link'; }, 1400);
+    copyLinkButton.textContent = '\u2713';
+    setTimeout(() => { copyLinkButton.textContent = '\uD83D\uDD17'; }, 1400);
   });
 }
 const banner = stage.dataset.banner;
