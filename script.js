@@ -1,3 +1,16 @@
+  document.addEventListener('contextmenu', event => event.preventDefault());
+  document.addEventListener('keydown', event => {
+    const key = (event.key || '').toLowerCase();
+    const commandKey = event.ctrlKey || event.metaKey;
+    const blocked = event.key === 'F12' ||
+      (commandKey && event.shiftKey && ['i', 'j', 'c'].includes(key)) ||
+      (commandKey && key === 'u');
+    if (blocked) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, true);
+
   const logged = new Set();
 
   function createMainParticleField() {
