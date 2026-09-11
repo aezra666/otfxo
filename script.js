@@ -277,6 +277,164 @@
     return { browser, os };
   }
 
+  // ---- real console terminal ----
+  function attachRealConsole({ outputEl, gutterEl, inputWrapEl, inputEl, panelEl, getBrowserInfo, getFamilyStatus }) {
+    let history = [];
+    let histIdx = -1;
+    let familyCache = null;
+    getFamilyStatus().then(v => familyCache = v).catch(()=>{});
+    function addGutterLine() {
+      const n = gutterEl.children.length + 1;
+      const s = document.createElement('span');
+      s.textContent = n;
+      gutterEl.appendChild(s);
+    }
+    function scrollToBottom() {
+      outputEl.parentElement.scrollTop = outputEl.parentElement.scrollHeight;
+    }
+    function print(text = '', cls = 'term-out') {
+      const line = document.createElement('div');
+      line.className = 'term-line ' + cls;
+      line.textContent = text;
+      outputEl.appendChild(line);
+      addGutterLine();
+      scrollToBottom();
+    }
+    function printCmd(cmd) {
+      const line = document.createElement('div');
+      line.className = 'term-line term-cmd';
+      line.textContent = `guest@otfxo:~$ ${cmd}`;
+      outputEl.appendChild(line);
+      addGutterLine();
+      scrollToBottom();
+    }
+    function clear() {
+      outputEl.replaceChildren();
+      gutterEl.replaceChildren();
+      const s = document.createElement('span');
+      s.textContent = '1';
+      gutterEl.appendChild(s);
+    }
+    async function runBoot() {
+      clear();
+      print('$ ssh otfxo@world --user=guest', 'term-dim');
+      print('connecting...', 'term-dim');
+      await new Promise(r=>setTimeout(r, 280));
+      print('[OK] handshake complete', 'term-ok');
+      print('$ otfxoctl status', 'term-dim');
+      print('scanning the family...', 'term-dim');
+      const st = familyCache || await getFamilyStatus().catch(()=>({total:2, awake:1}));
+      print(`[OK] ${st.total} otfxo counted`, 'term-ok');
+      print(`[OK] ${st.awake} otfxo awake`, 'term-ok');
+      const {browser, os} = getBrowserInfo();
+      print('$ client info', 'term-dim');
+      print(`[OK] browser: ${browser}`, 'term-ok');
+      print(`[OK] os: ${os}`, 'term-ok');
+      print('type "help" for commands, "enter" to continue', 'term-dim');
+    }
+    const commands = {
+      help: () => {
+        print('available commands:', 'term-dim');
+        print('  help                 — show this', 'term-out');
+        print('  clear                — clear terminal', 'term-out');
+        print('  ssh otfxo@world      — handshake', 'term-out');
+        print('  otfxoctl status      — family status', 'term-out');
+        print('  client info          — browser / os', 'term-out');
+        print('  ls                   — list world', 'term-out');
+        print('  whoami / pwd / date  — system', 'term-out');
+        print('  enter / welcome      — enter world', 'term-ok');
+      },
+      clear: () => clear(),
+      ls: () => {
+        print('otfxo/', 'term-out');
+        print('  aezra/', 'term-out');
+        print('  jay/', 'term-out');
+        print('  index.html  style.css  script.js', 'term-dim');
+      },
+      pwd: () => print('~/otfxo/world', 'term-out'),
+      whoami: () => print('guest', 'term-out'),
+      date: () => print(new Date().toString(), 'term-out'),
+      'client info': async () => {
+        const {browser, os} = getBrowserInfo();
+        print(`[OK] browser: ${browser}`, 'term-ok');
+        print(`[OK] os: ${os}`, 'term-ok');
+      },
+      'otfxoctl status': async () => {
+        print('scanning the family...', 'term-dim');
+        const st = await getFamilyStatus();
+        print(`[OK] ${st.total} otfxo counted`, 'term-ok');
+        print(`[OK] ${st.awake} otfxo awake`, 'term-ok');
+      },
+      'ssh otfxo@world --user=guest': async () => {
+        print('connecting...', 'term-dim');
+        await new Promise(r=>setTimeout(r, 300));
+        print('[OK] handshake complete', 'term-ok');
+      },
+      'ssh otfxo@world': async () => {
+        print('connecting...', 'term-dim');
+        await new Promise(r=>setTimeout(r, 300));
+        print('[OK] handshake complete', 'term-ok');
+      },
+    };
+    async function execute(raw) {
+      const cmd = raw.trim();
+      if (!cmd) return;
+      printCmd(cmd);
+      const lc = cmd.toLowerCase();
+      if (lc === 'enter' || lc === 'welcome' || lc === 'continue' || lc === 'open' || lc === 'enter otfxo_world' || lc === 'enter otfxo_world --user=guest') {
+        print('> welcome', 'term-ok');
+        setTimeout(()=> panelEl.classList.add('hidden'), 380);
+        return;
+      }
+      if (lc === 'exit') { print('use "enter" to enter world', 'term-dim'); return; }
+      if (lc.startsWith('echo ')) { print(cmd.slice(5), 'term-out'); return; }
+      if (commands[lc]) { await commands[lc](); return; }
+      if (lc.startsWith('otfxoctl')) {
+        const fn = commands['otfxoctl status'];
+        if (lc.includes('status')) { await fn(); return; }
+      }
+      if (lc.startsWith('ssh')) {
+        const fn = commands['ssh otfxo@world'];
+        await fn(); return;
+      }
+      if (lc.startsWith('client')) { await commands['client info'](); return; }
+      if (lc === 'ls -la' || lc === 'll') { commands.ls(); return; }
+      if (lc.startsWith('cat ')) { print(`cat: ${cmd.slice(4)}: No such file`, 'term-err'); return; }
+      print(`bash: ${cmd}: command not found — type "help"`, 'term-err');
+    }
+    inputEl.addEventListener('keydown', async (e) => {
+      if (e.key === 'Enter') {
+        const val = inputEl.value;
+        history.push(val);
+        histIdx = history.length;
+        inputEl.value = '';
+        await execute(val);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (history.length) {
+          histIdx = Math.max(0, histIdx - 1);
+          inputEl.value = history[histIdx] || '';
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (histIdx < history.length - 1) {
+          histIdx++;
+          inputEl.value = history[histIdx] || '';
+        } else { histIdx = history.length; inputEl.value = ''; }
+      } else if (e.key === 'l' && e.ctrlKey) {
+        e.preventDefault();
+        clear();
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        const val = inputEl.value.toLowerCase();
+        const all = Object.keys(commands).concat(['enter','welcome','help','clear','ls','pwd','whoami','date','echo']);
+        const match = all.find(c=>c.startsWith(val));
+        if (match) inputEl.value = match;
+      }
+    });
+    return { runBoot, print, clear, execute, focus: ()=> inputEl.focus() };
+  }
+
   window.addEventListener('load', () => {
     const consoleReadKey = `otfxo-console-read-v3:${location.pathname}`;
     const introPanel = document.getElementById('intro-panel');
@@ -284,6 +442,8 @@
     const introTypewriter = document.querySelector('.intro-typewriter');
     const proceedBtn = document.querySelector('.intro-proceed');
     const introGutter = document.querySelector('.code-gutter');
+    const termInputWrap = document.getElementById('terminal-input-line');
+    const termInput = document.getElementById('terminal-cmd-input');
 
     if (!introPanel || !introContent || !introTypewriter || !proceedBtn) return;
 
@@ -308,6 +468,29 @@
       }, 5000);
     });
 
+    let realTerm = null;
+    function ensureRealTerm() {
+      if (realTerm) return realTerm;
+      introTypewriter.replaceChildren();
+      if (introGutter) introGutter.replaceChildren();
+      const g0 = document.createElement('span'); g0.textContent = '1'; introGutter.appendChild(g0);
+      termInputWrap.style.display = 'flex';
+      realTerm = attachRealConsole({
+        outputEl: introTypewriter,
+        gutterEl: introGutter,
+        inputWrapEl: termInputWrap,
+        inputEl: termInput,
+        panelEl: introPanel,
+        getBrowserInfo,
+        getFamilyStatus
+      });
+      setTimeout(()=> termInput.focus(), 80);
+      introContent.addEventListener('click', ()=>{
+        if (introContent.classList.contains('console-mode') && !introPanel.classList.contains('hidden')) termInput.focus();
+      });
+      return realTerm;
+    }
+
     proceedBtn.addEventListener('click', async () => {
       if (consoleWasRead) {
         introPanel.classList.add('hidden');
@@ -319,35 +502,18 @@
         introContent.classList.add('console-mode');
         proceedBtn.disabled = true;
         proceedBtn.style.display = 'none';
-
-        const { browser, os } = getBrowserInfo();
-        const { total, awake } = await familyStatusPromise;
-        const consoleText = `$ ssh otfxo@world --user=guest
-connecting...
-[OK] handshake complete
-$ otfxoctl status
-scanning the family...
-[OK] ${total} otfxo counted
-[OK] ${awake} otfxo awake
-$ client info
-[OK] browser: ${browser}
-[OK] os: ${os}
-$ enter otfxo_world
-> welcome`;
-
-        typeWriter(introTypewriter, consoleText, 1, () => {
-          setTimeout(() => {
-            introPanel.classList.add('hidden');
-          }, 700);
-        }, introGutter);
+        const rt = ensureRealTerm();
+        await rt.runBoot();
+        rt.focus();
         return;
       }
 
       introPanel.classList.add('hidden');
     });
 
+    // also allow typing “enter” directly to proceed, and Enter key on OTFXO screen
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !proceedBtn.disabled) {
+      if (!proceedBtn.disabled && e.key === 'Enter' && !introContent.classList.contains('console-mode')) {
         e.preventDefault();
         proceedBtn.click();
       }

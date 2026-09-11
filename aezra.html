@@ -216,6 +216,54 @@ body::before {
   font-size: 0.78rem;
   text-shadow: none;
 }
+/* real console — interactive prompt */
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 6px 0 0;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.terminal-prompt {
+  color: #39ff14;
+  text-shadow: 0 0 5px rgba(57,255,20,0.9), 0 0 10px rgba(57,255,20,0.45);
+  white-space: nowrap;
+  user-select: none;
+}
+.terminal-cmd-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: #e6edf3;
+  font: inherit;
+  caret-color: #39ff14;
+}
+.terminal-cmd-input::placeholder { color: rgba(230,237,243,0.25); }
+.console-mode .intro-content {
+  max-height: min(70vh, 520px);
+  overflow: hidden;
+}
+.console-mode .intro-text-box {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 300px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(57,255,20,0.3) transparent;
+}
+.console-mode .intro-text-box::-webkit-scrollbar { width: 6px; }
+.console-mode .intro-text-box::-webkit-scrollbar-thumb { background: rgba(57,255,20,0.3); border-radius: 999px; }
+.term-line { white-space: pre-wrap; word-break: break-word; }
+.term-cmd { color: #e6edf3; }
+.term-out { color: rgba(230,237,243,0.9); }
+.term-ok { color: #39ff14; text-shadow: 0 0 5px rgba(57,255,20,0.8); }
+.term-err { color: #ff6b6b; }
+.term-dim { color: rgba(230,237,243,0.55); }
 
 .intro-logo img {
   width: 300px;
@@ -447,7 +495,11 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
       </div>
       <div class="intro-text-box">
         <div class="code-gutter"></div>
-        <p class="intro-typewriter"></p>
+        <div class="intro-typewriter"></div>
+      </div>
+      <div class="terminal-input-line" id="terminal-input-line" style="display:none">
+        <span class="terminal-prompt">guest@otfxo:~$</span>
+        <input type="text" class="terminal-cmd-input" id="terminal-cmd-input" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" placeholder="">
       </div>
       <button class="intro-proceed" disabled="">ENTER</button>
     </div>
