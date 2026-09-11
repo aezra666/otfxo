@@ -199,6 +199,26 @@ function createParticleField() {
 const stage = document.getElementById('stage');
 stage.classList.add('show');
 const id = stage.dataset.userId;
+const copyLinkButton = document.querySelector('.copy-link');
+if (copyLinkButton) {
+  copyLinkButton.addEventListener('click', async () => {
+    const pageUrl = window.location.href.split('#')[0];
+    try {
+      await navigator.clipboard.writeText(pageUrl);
+    } catch {
+      const helper = document.createElement('textarea');
+      helper.value = pageUrl;
+      helper.style.position = 'fixed';
+      helper.style.opacity = '0';
+      document.body.appendChild(helper);
+      helper.select();
+      document.execCommand('copy');
+      helper.remove();
+    }
+    copyLinkButton.textContent = 'Copied';
+    setTimeout(() => { copyLinkButton.textContent = 'Copy link'; }, 1400);
+  });
+}
 const banner = stage.dataset.banner;
 document.getElementById('bg').style.backgroundImage = `url('${banner}')`;
 document.getElementById('media').src = banner;
