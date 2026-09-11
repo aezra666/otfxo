@@ -199,6 +199,12 @@ function createParticleField() {
 const stage = document.getElementById('stage');
 stage.classList.add('show');
 const id = stage.dataset.userId;
+document.querySelectorAll('.social-icon[data-icon]').forEach(icon => {
+  if (icon.dataset.icon) {
+    icon.src = icon.dataset.icon;
+    icon.closest('.social-link')?.classList.add('has-icon');
+  }
+});
 const copyLinkButton = document.querySelector('.copy-link');
 if (copyLinkButton) {
   copyLinkButton.addEventListener('click', async () => {
@@ -219,13 +225,13 @@ if (copyLinkButton) {
     setTimeout(() => { copyLinkButton.textContent = '\uD83D\uDD17'; }, 1400);
   });
 }
-const banner = stage.dataset.banner;
-document.getElementById('bg').style.backgroundImage = `url('${banner}')`;
-document.getElementById('media').src = banner;
+const banner = window.OTFXO_PROFILES?.[id]?.banner || '';
+const background = document.getElementById('bg');
+if (background) background.style.backgroundImage = `url('${banner}')`;
 
 const music = document.getElementById('music');
 music.crossOrigin = 'anonymous'; // must be set BEFORE src so Web Audio can read the stream
-music.src = stage.dataset.music;
+music.src = window.OTFXO_PROFILES?.[id]?.music || '';
 music.volume = 0.5;
 
 // If the audio host refuses CORS, reload without it: plain playback, no visualizer.
@@ -234,7 +240,7 @@ music.addEventListener('error', () => {
   if (!bassAllowed) return;
   bassAllowed = false;
   music.removeAttribute('crossorigin');
-  music.src = stage.dataset.music;
+  music.src = window.OTFXO_PROFILES?.[id]?.music || '';
   music.load();
   music.play().catch(() => {});
 }, { once: true });
@@ -247,7 +253,43 @@ let musicVolume = 0.5;
 
 const cardWrap = document.querySelector('.card-wrap');
 const soloCard = document.querySelector('.solo-card');
+const cardEdge = document.querySelector('.card-edge');
 const edgePath = document.getElementById('cardEdgePath');
+
+let cardTilt = { rotateX: 0, rotateY: 0 };
+function updateCardTransform() {
+  if (!soloCard) return;
+  soloCard.style.transform = `perspective(900px) rotateX(${cardTilt.rotateX}deg) rotateY(${cardTilt.rotateY}deg) translateY(-5px) scale(1.015)`;
+  if (cardEdge) cardEdge.style.transform = `perspective(900px) rotateX(${cardTilt.rotateX}deg) rotateY(${cardTilt.rotateY}deg) translateY(-5px) scale(1.015)`;
+}
+
+if (cardWrap && soloCard) {
+  cardWrap.addEventListener('click', event => {
+    if (event.target.closest('button, a, input, label')) return;
+    cardWrap.classList.remove('is-tilting');
+    soloCard.classList.toggle('is-flipped');
+    soloCard.classList.toggle('is-focused');
+    updateCardTransform();
+  });
+
+  cardWrap.addEventListener('pointermove', event => {
+    cardWrap.classList.add('is-tilting');
+    const bounds = cardWrap.getBoundingClientRect();
+    const horizontal = (event.clientX - bounds.left) / bounds.width - 0.5;
+    const vertical = (event.clientY - bounds.top) / bounds.height - 0.5;
+    const rotateY = horizontal * 12;
+    const rotateX = vertical * -12;
+    cardTilt = { rotateX, rotateY };
+    updateCardTransform();
+  });
+
+  cardWrap.addEventListener('pointerleave', () => {
+    cardWrap.classList.remove('is-tilting');
+    cardTilt = { rotateX: 0, rotateY: 0 };
+    updateCardTransform();
+  });
+}
+
 let waveAmp = 0, waveTarget = 0;
 const WAVE_MAX = 16; // px — soft but with a bit of bite
 
@@ -358,7 +400,12 @@ window.addEventListener('pageshow', event => { if (event.persisted) wakeMusic();
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wakeMusic(); });
 window.addEventListener('focus', wakeMusic);
 // If autoplay is blocked on return, the next tap anywhere restarts it.
-document.addEventListener('pointerdown', () => {
+document.addEventListener('pointerdown', event => {
+  const intro = document.getElementById('intro-panel');
+  if (intro && !intro.classList.contains('hidden')) {
+    if (event.target.closest('.intro-proceed')) wakeMusic();
+    return;
+  }
   if (stage.classList.contains('show')) wakeMusic();
 }, { passive: true });
 
@@ -367,6 +414,24 @@ const content = document.querySelector('.intro-content');
 const typewriter = document.querySelector('.intro-typewriter');
 const gutter = document.querySelector('.code-gutter');
 const proceedButton = document.querySelector('.intro-proceed');
+const introPanel = document.getElementById('intro-panel');
+let introTextFinished = false;
+let introAvatarReady = false;
+function updateIntroButton() {
+  if (proceedButton) proceedButton.disabled = !(introTextFinished && introAvatarReady);
+}
+if (typewriter) {
+  typeWriter(typewriter, '𝗢𝗧𝗙𝗫𝗢', 55, () => {
+    introTextFinished = true;
+    updateIntroButton();
+  }, gutter);
+}
+if (proceedButton && introPanel) {
+  proceedButton.addEventListener('click', () => {
+    introPanel.classList.add('hidden');
+    setTimeout(() => { introPanel.style.display = 'none'; }, 850);
+  });
+}
 const consoleReadKey = `otfxo-console-read-v3:${location.pathname}`;
 const consoleWasRead = sessionStorage.getItem(consoleReadKey) === 'true';
 
@@ -461,207 +526,6 @@ function setupVisualControls() {
 createParticleField();
 setupVisualControls();
 
-// ---- real console for solo pages ----
-function attachRealConsoleSolo({ outputEl, gutterEl, inputWrapEl, inputEl, panelEl, stageEl, musicEl }) {
-  let history = [];
-  let histIdx = -1;
-  function addGutterLine() {
-    const s = document.createElement('span');
-    s.textContent = gutterEl.children.length + 1;
-    gutterEl.appendChild(s);
-  }
-  function scrollToBottom() {
-    outputEl.parentElement.scrollTop = outputEl.parentElement.scrollHeight;
-  }
-  function print(text = '', cls = 'term-out') {
-    const line = document.createElement('div');
-    line.className = 'term-line ' + cls;
-    line.textContent = text;
-    outputEl.appendChild(line);
-    addGutterLine();
-    scrollToBottom();
-  }
-  function printCmd(cmd) {
-    const line = document.createElement('div');
-    line.className = 'term-line term-cmd';
-    line.textContent = `guest@otfxo:~$ ${cmd}`;
-    outputEl.appendChild(line);
-    addGutterLine();
-    scrollToBottom();
-  }
-  function clear() {
-    outputEl.replaceChildren();
-    gutterEl.replaceChildren();
-    const s = document.createElement('span');
-    s.textContent = '1';
-    gutterEl.appendChild(s);
-  }
-  async function runBoot() {
-    clear();
-    print('$ ssh otfxo@world --user=guest', 'term-dim');
-    print('connecting...', 'term-dim');
-    await new Promise(r=>setTimeout(r, 260));
-    print('[OK] handshake complete', 'term-ok');
-    print('$ otfxoctl status', 'term-dim');
-    print('scanning the family...', 'term-dim');
-    print('[OK] 1 otfxo counted', 'term-ok');
-    print('[OK] 1 otfxo awake', 'term-ok');
-    print('$ client info', 'term-dim');
-    print('[OK] loading profile...', 'term-dim');
-    const ip = await loadOwnIp().catch(()=>'unavailable');
-    print(`[OK] ip: ${ip}`, 'term-ok');
-    print('type "help" for commands, "enter" to continue', 'term-dim');
-  }
-  const commands = {
-    help: () => {
-      print('available commands:', 'term-dim');
-      print('  help               — this', 'term-out');
-      print('  clear              — clear', 'term-out');
-      print('  ssh otfxo@world    — handshake', 'term-out');
-      print('  otfxoctl status    — family', 'term-out');
-      print('  client info        — ip / profile', 'term-out');
-      print('  profile            — discord profile', 'term-out');
-      print('  ls / pwd / whoami  — system', 'term-out');
-      print('  enter / welcome    — enter world', 'term-ok');
-    },
-    clear: () => clear(),
-    ls: () => {
-      print('~/otfxo/world/', 'term-out');
-      print('  profile  status  music  visitors', 'term-dim');
-    },
-    pwd: () => print('~/otfxo/world', 'term-out'),
-    whoami: () => print('guest', 'term-out'),
-    date: () => print(new Date().toString(), 'term-out'),
-    profile: async () => {
-      try {
-        const r = await fetch(`https://api.lanyard.rest/v1/users/${id}`);
-        const j = await r.json();
-        if (j.success) {
-          const u = j.data.discord_user;
-          print(`[OK] ${u.global_name || u.username} (@${u.username})`, 'term-ok');
-          print(`[OK] status: ${j.data.discord_status}`, 'term-ok');
-        } else print('profile: unavailable', 'term-err');
-      } catch { print('profile: error', 'term-err'); }
-    },
-    'client info': async () => {
-      print('[OK] loading profile...', 'term-dim');
-      const ip = await loadOwnIp().catch(()=>'unavailable');
-      print(`[OK] ip: ${ip}`, 'term-ok');
-    },
-    'otfxoctl status': async () => {
-      print('scanning the family...', 'term-dim');
-      print('[OK] 1 otfxo counted', 'term-ok');
-      print('[OK] 1 otfxo awake', 'term-ok');
-    },
-    'ssh otfxo@world --user=guest': async () => {
-      print('connecting...', 'term-dim');
-      await new Promise(r=>setTimeout(r, 280));
-      print('[OK] handshake complete', 'term-ok');
-    },
-    'ssh otfxo@world': async () => {
-      print('connecting...', 'term-dim');
-      await new Promise(r=>setTimeout(r, 280));
-      print('[OK] handshake complete', 'term-ok');
-    },
-  };
-  async function execute(raw) {
-    const cmd = raw.trim();
-    if (!cmd) return;
-    printCmd(cmd);
-    const lc = cmd.toLowerCase();
-    if (lc === 'enter' || lc === 'welcome' || lc === 'continue' || lc === 'open' || lc === 'enter otfxo_world') {
-      print('> welcome', 'term-ok');
-      setTimeout(()=>{ panelEl.classList.add('hidden'); stageEl.classList.add('show'); musicEl.play().catch(()=>{}); }, 360);
-      return;
-    }
-    if (lc === 'exit') { print('use "enter" to enter world', 'term-dim'); return; }
-    if (lc.startsWith('echo ')) { print(cmd.slice(5), 'term-out'); return; }
-    if (commands[lc]) { await commands[lc](); return; }
-    if (lc.startsWith('otfxoctl')) {
-      if (lc.includes('status')) { await commands['otfxoctl status'](); return; }
-    }
-    if (lc.startsWith('ssh')) { await commands['ssh otfxo@world'](); return; }
-    if (lc.startsWith('client')) { await commands['client info'](); return; }
-    if (lc === 'ls -la' || lc === 'll') { commands.ls(); return; }
-    if (lc.startsWith('cat ')) { print(`cat: ${cmd.slice(4)}: No such file`, 'term-err'); return; }
-    print(`bash: ${cmd}: command not found — type "help"`, 'term-err');
-  }
-  inputEl.addEventListener('keydown', async (e)=>{
-    if (e.key === 'Enter') {
-      const val = inputEl.value;
-      history.push(val);
-      histIdx = history.length;
-      inputEl.value = '';
-      await execute(val);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (history.length) { histIdx = Math.max(0, histIdx-1); inputEl.value = history[histIdx] || ''; }
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (histIdx < history.length-1) { histIdx++; inputEl.value = history[histIdx] || ''; }
-      else { histIdx = history.length; inputEl.value=''; }
-    } else if (e.key === 'l' && e.ctrlKey) {
-      e.preventDefault(); clear();
-    } else if (e.key === 'Tab') {
-      e.preventDefault();
-      const val = inputEl.value.toLowerCase();
-      const all = Object.keys(commands).concat(['enter','welcome','help','clear','ls','pwd','whoami','date','echo','profile']);
-      const m = all.find(c=>c.startsWith(val));
-      if (m) inputEl.value = m;
-    }
-  });
-  return { runBoot, print, clear, execute, focus: ()=> inputEl.focus() };
-}
-
-window.addEventListener('load', () => {
-  typeWriter(typewriter, '\uD835\uDDE2\uD835\uDDE7\uD835\uDDD9\uD835\uDDEB\uD835\uDDE2', 80, () => {
-    proceedButton.style.display = 'block';
-    proceedButton.disabled = false;
-  });
-
-  const termInputWrap = document.getElementById('terminal-input-line');
-  const termInput = document.getElementById('terminal-cmd-input');
-  let realTerm = null;
-  function ensureRealTerm() {
-    if (realTerm) return realTerm;
-    typewriter.replaceChildren();
-    gutter.replaceChildren();
-    const g0 = document.createElement('span'); g0.textContent='1'; gutter.appendChild(g0);
-    termInputWrap.style.display='flex';
-    realTerm = attachRealConsoleSolo({
-      outputEl: typewriter,
-      gutterEl: gutter,
-      inputWrapEl: termInputWrap,
-      inputEl: termInput,
-      panelEl: panel,
-      stageEl: stage,
-      musicEl: music
-    });
-    setTimeout(()=> termInput.focus(), 80);
-    content.addEventListener('click', ()=>{
-      if (content.classList.contains('console-mode') && !panel.classList.contains('hidden')) termInput.focus();
-    });
-    return realTerm;
-  }
-
-  proceedButton.addEventListener('click', async () => {
-    if (consoleWasRead) {
-      panel.classList.add('hidden');
-      stage.classList.add('show');
-      music.play().catch(() => {});
-      return;
-    }
-    if (content.classList.contains('console-mode')) return;
-    sessionStorage.setItem(consoleReadKey, 'true');
-    content.classList.add('console-mode');
-    proceedButton.disabled = true;
-    proceedButton.style.display = 'none';
-    const rt = ensureRealTerm();
-    await rt.runBoot();
-    rt.focus();
-  });
-});
-
 async function loadProfile() {
   try {
     const response = await fetch(`https://api.lanyard.rest/v1/users/${id}`);
@@ -672,14 +536,20 @@ async function loadProfile() {
     }
     const user = json.data;
     const discordUser = user.discord_user;
+    const profileTitle = discordUser.global_name || discordUser.username || 'otfxo';
+    document.title = profileTitle;
     const avatarUrl = discordUser.avatar
       ? `https://cdn.discordapp.com/avatars/${id}/${discordUser.avatar}.png?size=256`
       : 'https://cdn.discordapp.com/embed/avatars/0.png';
+    const favicon = document.getElementById('profile-favicon');
+    if (favicon) favicon.href = avatarUrl;
     document.getElementById('avatar').src = avatarUrl;
     const introAvatar = document.getElementById('intro-avatar');
     const introFrame = document.getElementById('intro-avatar-frame');
     if (introAvatar) introAvatar.src = avatarUrl;
     if (introFrame) introFrame.classList.add('loaded');
+    introAvatarReady = true;
+    updateIntroButton();
     const deco = discordUser.avatar_decoration_data;
     const decoUrl = deco?.asset ? `https://cdn.discordapp.com/avatar-decoration-presets/${deco.asset}.png?size=160` : '';
     const avatarDeco = document.getElementById('avatarDeco');
@@ -725,14 +595,29 @@ async function loadOwnIp() {
 }
 
 async function loadVisitCount() {
-  const out = document.getElementById('visitCount');
-  if (!out) return;
+  const outputs = document.querySelectorAll('.visitor-count');
+  if (!outputs.length) return;
+
   try {
     const response = await fetch(`/api/visits?page=${encodeURIComponent(location.pathname)}`, { cache: 'no-store' });
     const data = await response.json();
-    if (typeof data.count === 'number') out.textContent = data.count.toLocaleString();
+    if (typeof data.count === 'number') {
+      const target = Math.max(1, data.count);
+      const duration = 1100;
+      const startedAt = performance.now();
+
+      function animateCount(now) {
+        const progress = Math.min(1, (now - startedAt) / duration);
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(1 + (target - 1) * easedProgress);
+        outputs.forEach(output => { output.textContent = current.toLocaleString(); });
+        if (progress < 1) requestAnimationFrame(animateCount);
+      }
+
+      requestAnimationFrame(animateCount);
+    }
   } catch {
-    out.textContent = '\u2014';
+    outputs.forEach(output => { output.textContent = '\u2014'; });
   }
 }
 

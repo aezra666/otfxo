@@ -125,6 +125,7 @@
   }
 
   const aboutText = ``;
+  const profileIds = Object.keys(window.OTFXO_PROFILES || {}).filter(id => /^\d+$/.test(id));
 
   let isTyping = false;
 
@@ -213,12 +214,12 @@
   }
 
   async function getFamilyStatus() {
-    const total = discordUsers.length;
+    const total = profileIds.length;
     let awake = 0;
 
-    await Promise.all(discordUsers.map(async (user) => {
+    await Promise.all(profileIds.map(async (userId) => {
       try {
-        const res = await fetch(`https://api.lanyard.rest/v1/users/${user.id}`);
+        const res = await fetch(`https://api.lanyard.rest/v1/users/${userId}`);
         const json = await res.json();
         if (json.success && json.data.discord_status && json.data.discord_status !== 'offline') {
           awake++;
@@ -555,20 +556,6 @@
     });
   };
 
-   const discordUsers = [
-    { //aezra
-      "id": "1034804876733071382",
-      "banner": "https://file.garden/aWlfqGYgcVhFp7er/banner.png",
-      "music": "https://file.garden/ap_Ebnzi9V7bLTDs/El%20De%20Las%20R's%20-%20La%20Cheyenne%20(Lyrics).mp3 "
-    },
-      { //jay
-         "id": "1483321828838477966",
-         "banner": "https://file.garden/ap_Ebnzi9V7bLTDs/download.gif",
-         "music": "https://file.garden/aWlfqGYgcVhFp7er/vxc.mp3"
-      },
-
-  ];
-
   async function fetchDiscordInfoMembers(discordId) {
     try {
       const res = await fetch(`https://api.lanyard.rest/v1/users/${discordId}`);
@@ -592,14 +579,15 @@
   (async () => {
     if (!dracGrid) return;
 
-    for (const user of discordUsers) {
-      const info = await fetchDiscordInfoMembers(user.id);
+    for (const userId of profileIds) {
+      const info = await fetchDiscordInfoMembers(userId);
+      const profile = window.OTFXO_PROFILES?.[userId] || {};
 
       const drac = document.createElement('div');
       drac.classList.add('drac');
 
       drac.innerHTML = `
-        <div class="drac-banner" style="background-image:url('${user.banner}'); opacity:0.35;"></div>
+        <div class="drac-banner" style="background-image:url('${profile.banner || ''}'); opacity:0.35;"></div>
         <div class="drac-content">
           <div class="avatar" style="background-image:url('${info.avatar}')"></div>
           <div class="info">
@@ -610,7 +598,7 @@
       `;
 
       const audio = document.createElement('audio');
-      audio.src = user.music;
+      audio.src = profile.music || '';
       audio.preload = "auto";
       audio.volume = 0.5;
       drac.appendChild(audio);
@@ -618,7 +606,7 @@
       drac.addEventListener('mouseenter', () => {
         const dracBannerBg = document.querySelector('.drac-banner-bg');
         if (dracBannerBg) {
-          dracBannerBg.style.backgroundImage = `url('${user.banner}')`;
+          dracBannerBg.style.backgroundImage = `url('${profile.banner || ''}')`;
           dracBannerBg.style.opacity = '1';
         }
         audio.currentTime = 0;
@@ -956,12 +944,13 @@ setInterval(() => {
 
 const cards = document.querySelectorAll('.card');
 const audio = document.getElementById('audio');
-const songs = [
-  "https://file.garden/ap_Ebnzi9V7bLTDs/Janice%20STFU.mp3"
-];
-
-cards.forEach((card, index) => {
-  card.dataset.audio = songs[index];
+cards.forEach(card => {
+  const banner = window.OTFXO_PROFILES?.[card.dataset.userId]?.banner;
+  const media = card.querySelector('.media-img');
+  if (banner && media) media.src = banner;
+});
+cards.forEach(card => {
+  card.dataset.audio = window.OTFXO_PROFILES?.[card.dataset.userId]?.music || '';
 });
 
 cards.forEach(card => {

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>aezra — otfxo</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&amp;family=Courier+Prime&amp;display=swap" rel="stylesheet">
+<link id="profile-favicon" rel="icon" type="image/png" href="https://file.garden/ap_Ebnzi9V7bLTDs/6212485181ca055f760855d98d3ee4bc.gif">
 <style>
 :root {
     --active-banner: none;
@@ -76,8 +76,30 @@ body::before {
   z-index: 9999;
   opacity: 1;
   transition: opacity 0.8s ease;
-  display: none;
 }
+
+.intro-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.22;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, rgba(0,0,0,0.18) 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 8px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 8px),
+    radial-gradient(ellipse at center, transparent 48%, rgba(0,0,0,0.42) 100%);
+  mix-blend-mode: screen;
+  animation: intro-crt-flicker 0.18s steps(2, end) infinite;
+}
+
+@keyframes intro-crt-flicker {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.26; }
+}
+
+.intro-content { position: relative; z-index: 2; }
 
 .intro-panel.hidden {
   opacity: 0;
@@ -442,6 +464,7 @@ body::before {
   position: relative;
   width: min(330px, calc(100vw - 32px));
   height: 410px;
+  perspective: 900px;
   transform: translateY(10px) scale(0.98);
   transition: transform 0.8s cubic-bezier(.2,.8,.2,1);
 }
@@ -449,11 +472,26 @@ body::before {
 .solo-card {
   position: absolute; inset: 0;
   border-radius: 22px; overflow: hidden;
-  background: rgb(8 9 12 / var(--card-alpha, 0.38));
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(8,9,12,var(--card-alpha, 0.22)) 38%, rgba(255,255,255,0.025));
   border: 1px solid transparent;
   backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
+  transform-style:preserve-3d;
+  transition:transform 0.6s cubic-bezier(.2,.8,.2,1), box-shadow 0.35s ease;
 }
+.solo-card::before { display:none; }
+.solo-card > .solo-inner, .solo-card > .top-visitor-eye, .solo-card > .copy-link { transition:opacity 0.45s ease, transform 0.45s ease; }
+.card-back { position:absolute; inset:0; z-index:6; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; border-radius:22px; overflow:hidden; background:rgba(8,9,12,0.12); color:#fff; opacity:0; visibility:hidden; pointer-events:none; transform:scaleX(0.05); transition:opacity 0.45s ease, visibility 0.45s ease, transform 0.45s cubic-bezier(.2,.8,.2,1); }
+.card-back::before { content:''; position:absolute; inset:-18px; z-index:-1; background:inherit; backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px); }
+.card-back > * { position:relative; z-index:1; }
+.card-back { pointer-events:none; }
+.solo-card.is-flipped .card-back { opacity:1; visibility:visible; pointer-events:auto; transform:scaleX(1); }
+.solo-card.is-flipped > .solo-inner, .solo-card.is-flipped > .top-visitor-eye, .solo-card.is-flipped > .copy-link { opacity:0; pointer-events:none; transform:scaleX(0.05); }
+.card-wrap.is-tilting .solo-card, .card-wrap.is-tilting .card-edge { transition:transform 0.08s ease-out; }
+.card-back-title { color:rgba(255,255,255,0.65); font-size:10px; letter-spacing:0.18em; text-transform:uppercase; }
+.card-back-hint { color:rgba(255,255,255,0.42); font-size:9px; letter-spacing:0.08em; text-transform:uppercase; }
+.solo-card.is-focused .solo-info, .solo-card.is-focused .top-visitor-eye, .solo-card.is-focused .copy-link { filter:blur(5px); opacity:0.3; }
+.solo-card.is-focused .solo-avatar { filter:none; opacity:1; transform:scale(1.04); }
 .card-edge {
   position: absolute; inset: 0; width: 100%; height: 100%;
   overflow: visible; pointer-events: none; z-index: 5;
@@ -461,8 +499,6 @@ body::before {
           drop-shadow(0 0 var(--neon-glow, 28px) color-mix(in srgb, var(--accent-color, #b980ff) 45%, transparent));
 }
 .card-edge path { fill: none; stroke: color-mix(in srgb, var(--accent-color, #b980ff) 80%, transparent); stroke-width: 1.2; stroke-linejoin: round; }
-.solo-card .media-slot { position:absolute; inset:0; z-index:1; overflow:hidden; border-radius:22px; }
-.solo-card .media-img { display:none; }
 .solo-card::after { content:''; position:absolute; inset:0; z-index:2; background:transparent; pointer-events:none; border-radius:22px; }
 .solo-inner { position:relative; z-index:3; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:34px 28px 28px; gap:18px; text-align:center; }
 .solo-avatar { position:relative; width:118px; height:118px; border-radius:50%; background:#111; flex-shrink:0; border:2px solid var(--accent-color, #b980ff); box-shadow:0 0 0 7px color-mix(in srgb, var(--accent-color, #b980ff) 22%, transparent), 0 0 var(--neon-glow, 28px) color-mix(in srgb, var(--accent-color, #b980ff) 46%, transparent), 0 14px 34px rgba(0,0,0,0.42); }
@@ -470,12 +506,28 @@ body::before {
 .solo-avatar .solo-decoration { position:absolute; inset:-14%; width:128%; height:128%; max-width:none; border-radius:0; object-fit:contain; pointer-events:none; z-index:4; display:none; border:none; box-shadow:none; background:transparent; }
 .solo-dot { position:absolute; bottom:4px; right:4px; width:17px; height:17px; border-radius:50%; border:3px solid #111; background:#80848e; z-index:5; }
 .status-online{background:#23a55a;}.status-idle{background:#f0b232;}.status-dnd{background:#f23f43;}.status-offline{background:#80848e;}
-.solo-info { color:#fff; text-shadow:0 0 12px rgba(255,255,255,0.35); }
+.solo-info { position:relative; color:#fff; text-shadow:0 0 12px rgba(255,255,255,0.35); }
 .solo-name { font-size:28px; letter-spacing:1px; font-weight:700; }
 .solo-user { margin-top:5px; font-size:12px; opacity:0.62; font-style:italic; }
-.solo-status { display:inline-block; margin-top:14px; padding:5px 10px; border:1px solid color-mix(in srgb, var(--accent-color, #b980ff) 70%, transparent); border-radius:999px; font-size:11px; opacity:0.9; color:var(--accent-color, #b980ff); background:color-mix(in srgb, var(--accent-color, #b980ff) 12%, transparent); box-shadow:0 0 14px color-mix(in srgb, var(--accent-color, #b980ff) 26%, transparent); }
-.solo-act { margin-top:16px; font-size:12px; }
+.solo-status { display:inline-block; margin-top:26px; padding:0; border:0; font-size:11px; opacity:0.9; color:var(--accent-color, #b980ff); background:transparent; box-shadow:none; }
+.social-links { display:flex; justify-content:center; gap:12px; margin-top:12px; }
+.social-link { display:inline-flex; align-items:center; justify-content:center; width:25px; height:25px; border:1px solid rgba(255,255,255,0.2); border-radius:50%; color:rgba(255,255,255,0.72); text-decoration:none; font-size:10px; font-weight:700; line-height:1; transition:color 0.2s ease, transform 0.2s ease, border-color 0.2s ease; }
+.social-link:hover, .social-link:focus-visible { color:#fff; border-color:rgba(255,255,255,0.7); transform:translateY(-2px); outline:none; }
+.social-icon { width:14px; height:14px; object-fit:contain; display:none; }
+.social-link.has-icon .social-icon { display:block; }
+.social-link.has-icon .social-fallback { display:none; }
+.social-link svg { width:15px; height:15px; fill:currentColor; }
+
+.solo-act { position:relative; width:100%; margin-top:16px; font-size:12px; text-align:left; }
 .solo-act .a-det { display:block; font-size:11px; opacity:0.6; }
+.visitor-eye { position:absolute; right:0; bottom:0; z-index:4; display:flex; align-items:center; justify-content:center; gap:4px; height:20px; color:rgba(255,255,255,0.78); opacity:1; border:0; background:transparent; box-shadow:none; filter:none; font-size:10px; line-height:1; white-space:nowrap; }
+.top-visitor-eye { position:absolute; top:12px; right:12px; z-index:4; }
+.visitor-eye svg { width:18px; height:11px; overflow:visible; }
+.visitor-eye-lid { fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; }
+.visitor-eye-iris { fill:rgba(255,255,255,0.28); stroke:currentColor; stroke-width:1.1; }
+.visitor-eye-pupil { fill:currentColor; }
+.visitor-eye-shine { fill:#fff; }
+.visitor-count { font-variant-numeric:tabular-nums; }
 .back { position:fixed; top:18px; left:18px; z-index:60; color:#5a6472; text-decoration:none; font-size:0.8rem; }
 .back:hover { color:#fff; }
 
@@ -484,7 +536,7 @@ body::before {
 .visual-toggle:hover { background:rgba(255,255,255,0.14); transform:rotate(22deg) scale(1.06); }
 .visual-toggle { box-shadow:0 0 16px color-mix(in srgb, var(--accent-color, #b980ff) 36%, transparent); }
 .visual-tools.open .visual-toggle { transform:rotate(90deg); background:rgba(255,255,255,0.14); }
-.visual-panel { visibility:hidden; opacity:0; transform:translateY(-8px) scale(0.96); pointer-events:none; width:220px; margin-top:8px; padding:16px; border:1px solid rgba(255,255,255,0.18); border-radius:14px; background:rgba(8,9,12,0.82); color:#fff; box-shadow:0 18px 50px rgba(0,0,0,0.45); backdrop-filter:blur(18px); transition:opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease; }
+.visual-panel { visibility:hidden; opacity:0; transform:translateY(-8px) scale(0.96); pointer-events:none; width:220px; margin-top:8px; padding:16px; border:1px solid color-mix(in srgb, var(--accent-color, #b980ff) 58%, rgba(255,255,255,0.28)); border-radius:14px; background:rgba(34,35,43,0.82); color:#fff; box-shadow:0 18px 50px rgba(0,0,0,0.38), 0 0 28px color-mix(in srgb, var(--accent-color, #b980ff) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.16); backdrop-filter:blur(18px); transition:opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease; }
 .visual-tools.open .visual-panel { visibility:visible; opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
 .visual-title { margin-bottom:14px; color:rgba(255,255,255,0.55); font-size:10px; letter-spacing:0.18em; text-transform:uppercase; }
 .visual-control { display:grid; gap:7px; margin-top:13px; }
@@ -501,23 +553,11 @@ body::before {
 .accent-picker::-webkit-color-swatch { border:2px solid rgba(255,255,255,0.8); border-radius:50%; }
 .visual-reset { margin-top:15px; padding:0; border:0; background:none; color:rgba(255,255,255,0.42); cursor:pointer; font:inherit; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; }
 .visual-reset:hover { color:#fff; }
-body.crt-mode::after { content:''; position:fixed; inset:0; z-index:50; pointer-events:none; opacity:0.16; background:repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,0.12) 4px); mix-blend-mode:screen; }
+body.crt-mode::after { content:''; position:fixed; inset:0; z-index:50; pointer-events:none; opacity:0.28; background:repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0 1px, rgba(0,0,0,0.22) 1px 3px), repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 4px); mix-blend-mode:screen; }
 body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
 
-/* code-drawn eye visitor counter */
-.eye-counter { position:absolute; top:12px; right:12px; z-index:4; display:flex; align-items:center; gap:7px; padding:5px 10px 5px 7px; border:1px solid color-mix(in srgb, var(--accent-color, #b980ff) 55%, transparent); border-radius:999px; background:rgba(8,9,12,0.58); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); box-shadow:0 0 16px color-mix(in srgb, var(--accent-color, #b980ff) 30%, transparent); color:#fff; font-size:10.5px; letter-spacing:0.07em; }
-.eye-counter svg { width:23px; height:14px; overflow:visible; }
-.eye-counter .eye-lid { fill:none; stroke:var(--accent-color, #b980ff); stroke-width:1.6; stroke-linecap:round; }
-.eye-counter .eye-iris { fill:color-mix(in srgb, var(--accent-color, #b980ff) 35%, transparent); stroke:var(--accent-color, #b980ff); stroke-width:1.2; }
-.eye-counter .eye-pupil { fill:var(--accent-color, #b980ff); }
-.eye-counter .eye-shine { fill:#fff; opacity:0.9; }
-.eye-counter .eye { transform-origin:13px 8px; animation: eye-blink 5.5s ease-in-out infinite; }
-.eye-counter .eye-look { animation: eye-look 9s ease-in-out infinite; }
-@keyframes eye-blink { 0%, 92%, 100% { transform:scaleY(1); } 95% { transform:scaleY(0.08); } }
-@keyframes eye-look { 0%, 35%, 100% { transform:translateX(0); } 45%, 60% { transform:translateX(3px); } 70%, 85% { transform:translateX(-3px); } }
-.eye-counter output { min-width:2ch; text-align:right; font-variant-numeric:tabular-nums; }
-.copy-link { position:absolute; top:48px; right:12px; z-index:4; width:30px; height:30px; padding:0; border:1px solid color-mix(in srgb, var(--accent-color, #b980ff) 55%, transparent); border-radius:50%; background:rgba(8,9,12,0.58); color:rgba(255,255,255,0.78); cursor:pointer; font:16px/1 'Segoe UI Symbol', sans-serif; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); transition:color 0.2s ease, border-color 0.2s ease, background 0.2s ease; }
-.copy-link:hover, .copy-link:focus-visible { color:#fff; border-color:var(--accent-color, #b980ff); background:rgba(255,255,255,0.14); outline:none; }
+.copy-link { position:absolute; top:56px; left:50%; display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; margin:0; padding:0; border:0; border-radius:50%; background:transparent; color:rgba(255,255,255,0.78); cursor:pointer; font:12px/1 'Segoe UI Symbol', sans-serif; transform:translateX(-50%); transition:color 0.2s ease; }
+.copy-link:hover, .copy-link:focus-visible { color:#fff; outline:none; }
 
 @media (max-width: 520px) {
   .card-wrap { height:390px; }
@@ -527,6 +567,7 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
 </style>
 </head>
 <body>
+  <div class="bg" id="bg"></div>
   <!-- PER PERSON: change data-user-id, data-banner, data-music on #stage -->
   <div class="bg" id="bg"></div>
 
@@ -546,7 +587,6 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
         </div>
       </div>
       <div class="intro-text-box">
-        <div class="code-gutter"></div>
         <div class="intro-typewriter"></div>
       </div>
       <div class="terminal-input-line" id="terminal-input-line" style="display:none">
@@ -562,35 +602,38 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
 
 
   <div class="stage" id="stage"
-       data-user-id="1483321828838477966"
-       data-banner="https://file.garden/ap_Ebnzi9V7bLTDs/download.gif"
-       data-music="https://file.garden/ap_Ebnzi9V7bLTDs/Janice%20STFU.mp3">
+      data-user-id="1483321828838477966">
     <div class="card-wrap">
     <div class="solo-card">
-      <div class="media-slot"><img class="media-img" id="media" src=""></div>
       <div class="solo-inner">
         <div class="solo-avatar"><img id="avatar" src=""><img id="avatarDeco" class="solo-decoration" src="" alt=""><span class="solo-dot" id="dot"></span></div>
         <div class="solo-info">
           <div class="solo-name" id="name">…</div>
           <div class="solo-user" id="uname"></div>
+          <button class="copy-link" type="button" aria-label="Copy page link" title="Copy page link">&#128279;</button>
           <div class="solo-status" id="statusBox"></div>
           <div class="solo-act"><span id="actName"></span><span class="a-det" id="actDet"></span></div>
         </div>
       </div>
-      <div class="eye-counter" title="visitors" aria-label="visitor counter">
+      <span class="visitor-eye top-visitor-eye" title="Visitors" aria-label="Visitors">
         <svg viewBox="0 0 26 16" aria-hidden="true">
-          <g class="eye">
-            <path class="eye-lid" d="M1 8 C6 1.5, 20 1.5, 25 8 C20 14.5, 6 14.5, 1 8 Z"/>
-            <g class="eye-look">
-              <circle class="eye-iris" cx="13" cy="8" r="4.2"/>
-              <circle class="eye-pupil" cx="13" cy="8" r="2"/>
-              <circle class="eye-shine" cx="14.4" cy="6.6" r="0.8"/>
-            </g>
-          </g>
+          <path class="visitor-eye-lid" d="M1 8 C6 1.5, 20 1.5, 25 8 C20 14.5, 6 14.5, 1 8 Z"/>
+          <circle class="visitor-eye-iris" cx="13" cy="8" r="4.2"/>
+          <circle class="visitor-eye-pupil" cx="13" cy="8" r="2"/>
+          <circle class="visitor-eye-shine" cx="14.4" cy="6.6" r="0.8"/>
         </svg>
-        <output id="visitCount">&middot;&middot;&middot;</output>
+        <output class="visitor-count">1</output>
+      </span>
+      <div class="card-back" aria-label="Social links">
+        <div class="card-back-title">Connect</div>
+        <nav class="social-links" aria-label="Social links">
+          <!-- Replace each data-icon value with your icon image URL. Add has-icon to show it. -->
+          <a class="social-link has-icon" href="https://instagram.com/parengj" target="_blank" rel="noreferrer" aria-label="Instagram" title="Instagram"><img class="social-icon" data-icon="https://cdn.simpleicons.org/instagram/ffffff" alt=""><span class="social-fallback">IG</span></a>
+          <a class="social-link has-icon" href="https://discord.com/users/1483321828838477966" target="_blank" rel="noreferrer" aria-label="Discord" title="Discord"><img class="social-icon" data-icon="https://cdn.simpleicons.org/discord/ffffff" alt=""><span class="social-fallback">DC</span></a>
+          <a class="social-link has-icon" href="https://open.spotify.com/" target="_blank" rel="noreferrer" aria-label="Spotify" title="Spotify"><img class="social-icon" data-icon="https://cdn.simpleicons.org/spotify/ffffff" alt=""><span class="social-fallback">SP</span></a>
+        </nav>
+        <span class="card-back-hint">Click to return</span>
       </div>
-      <button class="copy-link" type="button" aria-label="Copy page link" title="Copy page link">&#128279;</button>
     </div>
     <svg class="card-edge" aria-hidden="true"><path id="cardEdgePath" d=""/></svg>
     </div>
@@ -635,6 +678,7 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
   <audio id="music" loop></audio>
 
 <script disable-devtool-auto="" src="https://cdn.jsdelivr.net/npm/disable-devtool@latest"></script>
-<script src="eye.js?v=audio-1"></script>
+<script src="profile-config.js"></script>
+<script src="eye.js?v=audio-3"></script>
 </body>
 </html>

@@ -16,8 +16,58 @@ export default {
 
     const cleanPageAssets = {
       '/aezra': '/aezra.html',
-      '/jay': '/jay.html'
+      '/jay': '/jay.html',
+      // Add a member by copying one of these ready slots and replacing the slug.
+      // '/member-04': '/member-04.html',
+      // '/member-05': '/member-05.html',
+      // '/member-06': '/member-06.html',
+      // '/member-07': '/member-07.html',
+      // '/member-08': '/member-08.html',
+      // '/member-09': '/member-09.html',
+      // '/member-10': '/member-10.html',
+      // '/member-11': '/member-11.html',
+      // '/member-12': '/member-12.html',
+      // '/member-13': '/member-13.html',
+      // '/member-14': '/member-14.html',
+      // '/member-15': '/member-15.html',
+      // '/member-16': '/member-16.html',
+      // '/member-17': '/member-17.html',
+      // '/member-18': '/member-18.html',
+      // '/member-19': '/member-19.html',
+      // '/member-20': '/member-20.html',
+      // '/member-21': '/member-21.html',
+      // '/member-22': '/member-22.html',
+      // '/member-23': '/member-23.html'
     };
+
+    const cleanPageRedirects = {
+      '/aezra.html': '/aezra',
+      '/jay.html': '/jay'
+      // '/member-04.html': '/member-04',
+      // '/member-05.html': '/member-05',
+      // '/member-06.html': '/member-06',
+      // '/member-07.html': '/member-07',
+      // '/member-08.html': '/member-08',
+      // '/member-09.html': '/member-09',
+      // '/member-10.html': '/member-10',
+      // '/member-11.html': '/member-11',
+      // '/member-12.html': '/member-12',
+      // '/member-13.html': '/member-13',
+      // '/member-14.html': '/member-14',
+      // '/member-15.html': '/member-15',
+      // '/member-16.html': '/member-16',
+      // '/member-17.html': '/member-17',
+      // '/member-18.html': '/member-18',
+      // '/member-19.html': '/member-19',
+      // '/member-20.html': '/member-20',
+      // '/member-21.html': '/member-21',
+      // '/member-22.html': '/member-22',
+      // '/member-23.html': '/member-23'
+    };
+    if (cleanPageRedirects[url.pathname]) {
+      return Response.redirect(`${url.origin}${cleanPageRedirects[url.pathname]}${url.search}`, 301);
+    }
+
     const assetPath = cleanPageAssets[url.pathname] || url.pathname;
 
     if (url.pathname === '/api/my-ip' && request.method === 'GET') {
