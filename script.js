@@ -1,15 +1,25 @@
-  document.addEventListener('contextmenu', event => event.preventDefault());
   document.addEventListener('keydown', event => {
     const key = (event.key || '').toLowerCase();
-    const commandKey = event.ctrlKey || event.metaKey;
-    const blocked = event.key === 'F12' ||
-      (commandKey && event.shiftKey && ['i', 'j', 'c'].includes(key)) ||
-      (commandKey && key === 'u');
-    if (blocked) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+    const closeWindow = event.key === 'F12' ||
+      (event.ctrlKey && event.shiftKey && ['i', 'c', 'j', 'k'].includes(key)) ||
+      (event.ctrlKey && key === 'u');
+    if (!closeWindow) return;
+    event.preventDefault();
+    event.stopPropagation();
+    window.close();
   }, true);
+
+  const isEditableTarget = target => target.closest?.('input, textarea, [contenteditable]');
+  document.addEventListener('selectstart', event => {
+    if (!isEditableTarget(event.target)) event.preventDefault();
+  });
+  document.addEventListener('copy', event => {
+    if (!isEditableTarget(event.target)) event.preventDefault();
+  });
+  document.addEventListener('contextmenu', event => event.preventDefault());
+  document.addEventListener('mousedown', event => {
+    if (event.button === 2) event.preventDefault();
+  });
 
   const logged = new Set();
 
@@ -952,8 +962,8 @@ document.querySelectorAll('.card').forEach(card => {
   card.style.cursor = 'pointer';
   card.addEventListener('click', () => {
     const pages = {
-      '1034804876733071382': 'aezra.html',
-      '1483321828838477966': 'jay.html'
+      '1034804876733071382': 'aezra',
+      '1483321828838477966': 'jay'
     };
     const page = pages[card.dataset.userId];
     if (page) window.location.href = page;

@@ -1,15 +1,25 @@
-document.addEventListener('contextmenu', event => event.preventDefault());
 document.addEventListener('keydown', event => {
   const key = (event.key || '').toLowerCase();
-  const commandKey = event.ctrlKey || event.metaKey;
-  const blocked = event.key === 'F12' ||
-    (commandKey && event.shiftKey && ['i', 'j', 'c'].includes(key)) ||
-    (commandKey && key === 'u');
-  if (blocked) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
+  const closeWindow = event.key === 'F12' ||
+    (event.ctrlKey && event.shiftKey && ['i', 'c', 'j', 'k'].includes(key)) ||
+    (event.ctrlKey && key === 'u');
+  if (!closeWindow) return;
+  event.preventDefault();
+  event.stopPropagation();
+  window.close();
 }, true);
+
+const isEditableTarget = target => target.closest?.('input, textarea, [contenteditable]');
+document.addEventListener('selectstart', event => {
+  if (!isEditableTarget(event.target)) event.preventDefault();
+});
+document.addEventListener('copy', event => {
+  if (!isEditableTarget(event.target)) event.preventDefault();
+});
+document.addEventListener('contextmenu', event => event.preventDefault());
+document.addEventListener('mousedown', event => {
+  if (event.button === 2) event.preventDefault();
+});
 
 function typeWriter(element, text, speed = 40, callback = null, gutterElement = null) {
   const scrambleCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%\u20ac&/.,<>';
