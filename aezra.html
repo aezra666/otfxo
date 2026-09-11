@@ -76,6 +76,7 @@ body::before {
   z-index: 9999;
   opacity: 1;
   transition: opacity 0.8s ease;
+  display: none;
 }
 
 .intro-panel.hidden {
@@ -397,6 +398,8 @@ body::before {
   opacity: 1;
   cursor: pointer;
 }
+
+.stage { opacity: 1; pointer-events: auto; }
 
 .intro-proceed:enabled:hover {
   background: #ffffff;
