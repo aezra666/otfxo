@@ -273,6 +273,49 @@ body::before {
   margin-bottom: -20px;
 }
 
+.intro-avatar-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0 16px;
+}
+.intro-avatar-frame {
+  position: relative;
+  width: 118px;
+  height: 118px;
+  flex-shrink: 0;
+  display: none;
+}
+.intro-avatar-frame.loaded { display: block; }
+.intro-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  background: #111;
+  border: 2px solid var(--accent-color, #b980ff);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent-color, #b980ff) 18%, transparent), 0 0 18px color-mix(in srgb, var(--accent-color, #b980ff) 35%, transparent);
+}
+.intro-avatar-deco {
+  position: absolute;
+  inset: -14%;
+  width: 128%;
+  height: 128%;
+  max-width: none;
+  border-radius: 0;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 2;
+  display: none;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+/* keep avatar visible in console — intro must be discord avatar */
+.console-mode .intro-avatar-wrap { display: flex; margin: 8px 0 12px; }
+.console-mode .intro-avatar-frame { width: 86px; height: 86px; }
+
 .intro-text-box {
   min-height: 30px;
   display: flex;
@@ -421,7 +464,8 @@ body::before {
 .solo-inner { position:relative; z-index:3; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:34px 28px 28px; gap:18px; text-align:center; }
 .solo-avatar { position:relative; width:118px; height:118px; border-radius:50%; background:#111; flex-shrink:0; border:2px solid var(--accent-color, #b980ff); box-shadow:0 0 0 7px color-mix(in srgb, var(--accent-color, #b980ff) 22%, transparent), 0 0 var(--neon-glow, 28px) color-mix(in srgb, var(--accent-color, #b980ff) 46%, transparent), 0 14px 34px rgba(0,0,0,0.42); }
 .solo-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
-.solo-dot { position:absolute; bottom:4px; right:4px; width:17px; height:17px; border-radius:50%; border:3px solid #111; background:#80848e; }
+.solo-avatar .solo-decoration { position:absolute; inset:-14%; width:128%; height:128%; max-width:none; border-radius:0; object-fit:contain; pointer-events:none; z-index:4; display:none; border:none; box-shadow:none; background:transparent; }
+.solo-dot { position:absolute; bottom:4px; right:4px; width:17px; height:17px; border-radius:50%; border:3px solid #111; background:#80848e; z-index:5; }
 .status-online{background:#23a55a;}.status-idle{background:#f0b232;}.status-dnd{background:#f23f43;}.status-offline{background:#80848e;}
 .solo-info { color:#fff; text-shadow:0 0 12px rgba(255,255,255,0.35); }
 .solo-name { font-size:28px; letter-spacing:1px; font-weight:700; }
@@ -493,6 +537,12 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
       <div class="intro-logo">
         <img src="https://file.garden/ap_Ebnzi9V7bLTDs/690967A0-5D9F-49B7-A53F-CCA5D276A296.png" alt="logo">
       </div>
+      <div class="intro-avatar-wrap">
+        <div id="intro-avatar-frame" class="intro-avatar-frame">
+          <img id="intro-avatar" class="intro-avatar" src="" alt="avatar">
+          <img id="intro-avatar-deco" class="intro-avatar-deco" src="" alt="">
+        </div>
+      </div>
       <div class="intro-text-box">
         <div class="code-gutter"></div>
         <div class="intro-typewriter"></div>
@@ -517,7 +567,7 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
     <div class="solo-card">
       <div class="media-slot"><img class="media-img" id="media" src=""></div>
       <div class="solo-inner">
-        <div class="solo-avatar"><img id="avatar" src=""><span class="solo-dot" id="dot"></span></div>
+        <div class="solo-avatar"><img id="avatar" src=""><img id="avatarDeco" class="solo-decoration" src="" alt=""><span class="solo-dot" id="dot"></span></div>
         <div class="solo-info">
           <div class="solo-name" id="name">…</div>
           <div class="solo-user" id="uname"></div>

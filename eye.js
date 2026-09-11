@@ -119,7 +119,6 @@ function setBio(state) {
 }
 
 const soloDevtoolsLogged = new Set();
-
 function logSoloDevtools(how) {
   if (soloDevtoolsLogged.has(how)) return;
   soloDevtoolsLogged.add(how);
@@ -133,22 +132,91 @@ function logSoloDevtools(how) {
   });
   new Image().src = `/api/log?${params.toString()}`;
 }
-
-document.addEventListener('contextmenu', event => {
-  event.preventDefault();
-  logSoloDevtools('right-click');
-});
-
-document.addEventListener('keydown', event => {
-  let how = null;
-  if (event.key === 'F12') how = 'F12';
-  if (event.ctrlKey && event.shiftKey && event.key.toUpperCase() === 'I') how = 'Ctrl+Shift+I';
-  if (event.ctrlKey && event.shiftKey && event.key.toUpperCase() === 'C') how = 'Ctrl+Shift+C';
-  if (event.ctrlKey && event.shiftKey && event.key.toUpperCase() === 'J') how = 'Ctrl+Shift+J';
-  if (event.ctrlKey && event.key.toLowerCase() === 'u') how = 'Ctrl+U';
-  if (!how) return;
-  event.preventDefault();
+function soloLockdown() {
+  if (document.documentElement.dataset.locked) return;
+  document.documentElement.dataset.locked = '1';
+  try {
+    document.documentElement.replaceChildren();
+    document.documentElement.style.cssText = 'background:#000!important;overflow:hidden!important';
+    document.body = document.createElement('body');
+    document.body.style.cssText = 'margin:0;background:#000;color:#39ff14;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:monospace';
+    document.body.innerHTML = '<div style="text-align:center;padding:20px">Access denied — devtools not allowed<br><span style="opacity:0.6;font-size:11px">otfxo</span></div>';
+    document.documentElement.appendChild(document.body);
+  } catch {}
+  try { window.open('', '_self'); window.close(); } catch {}
+  try { location.replace('about:blank'); } catch {}
+}
+function soloDevtoolsAttempt(how) {
   logSoloDevtools(how);
+  soloLockdown();
+}
+// ---- cross-browser block: every browser, every shortcut ----
+document.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  soloDevtoolsAttempt('right-click');
+  return false;
+});
+document.addEventListener('selectstart', (e) => {
+  if (e.target.closest && e.target.closest('input,textarea,[contenteditable],.terminal-cmd-input')) return;
+  e.preventDefault();
+  return false;
+});
+document.addEventListener('copy', (e) => {
+  if (e.target.closest && e.target.closest('input,textarea,[contenteditable],.terminal-cmd-input')) return;
+  e.preventDefault();
+  return false;
+});
+document.addEventListener('cut', (e) => {
+  if (e.target.closest && e.target.closest('input,textarea,[contenteditable],.terminal-cmd-input')) return;
+  e.preventDefault();
+  return false;
+});
+document.addEventListener('dragstart', (e) => e.preventDefault());
+document.addEventListener('mousedown', (e) => {
+  if (e.button === 2) soloDevtoolsAttempt('right-click');
+});
+document.addEventListener('keydown', (e) => {
+  const k = (e.key || '').toLowerCase();
+  const ctrl = e.ctrlKey || e.metaKey;
+  let how = null;
+  if (e.key === 'F12' || e.code === 'F12') how = 'F12';
+  else if (ctrl && e.shiftKey && k === 'i') how = 'DevTools';
+  else if (ctrl && e.shiftKey && k === 'j') how = 'Console';
+  else if (ctrl && e.shiftKey && k === 'c') how = 'Element picker';
+  else if (ctrl && e.shiftKey && k === 'k') how = 'Web console';
+  else if (ctrl && k === 'u') how = 'View source';
+  else if (ctrl && k === 's') how = 'Save';
+  else if (e.altKey && (e.key === 'F12' || e.code === 'F12')) how = 'F12';
+  if (how) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    soloDevtoolsAttempt(how);
+    return false;
+  }
+}, true);
+setInterval(() => {
+  if (!window.outerWidth || !window.innerWidth) return;
+  const wDiff = window.outerWidth - window.innerWidth;
+  const hDiff = window.outerHeight - window.innerHeight;
+  if (wDiff > 160 || hDiff > 160) soloDevtoolsAttempt('window-size');
+}, 800);
+setInterval(() => {
+  const s = performance.now();
+  debugger;
+  const e = performance.now();
+  if (e - s > 100) soloDevtoolsAttempt('debugger');
+}, 1500);
+try {
+  const _img = new Image();
+  Object.defineProperty(_img, 'id', { get() { soloDevtoolsAttempt('console-open'); return 'x'; } });
+  setInterval(() => { try { console.log(_img); console.clear(); } catch {} }, 1800);
+} catch {}
+window.addEventListener('resize', () => {
+  if (!window.outerWidth) return;
+  const wDiff = window.outerWidth - window.innerWidth;
+  const hDiff = window.outerHeight - window.innerHeight;
+  if (wDiff > 160 || hDiff > 160) soloDevtoolsAttempt('resize-devtools');
 });
 
 function createParticleField() {
@@ -661,9 +729,26 @@ async function loadProfile() {
     }
     const user = json.data;
     const discordUser = user.discord_user;
-    document.getElementById('avatar').src = discordUser.avatar
+    const avatarUrl = discordUser.avatar
       ? `https://cdn.discordapp.com/avatars/${id}/${discordUser.avatar}.png?size=256`
       : 'https://cdn.discordapp.com/embed/avatars/0.png';
+    document.getElementById('avatar').src = avatarUrl;
+    const introAvatar = document.getElementById('intro-avatar');
+    const introFrame = document.getElementById('intro-avatar-frame');
+    if (introAvatar) introAvatar.src = avatarUrl;
+    if (introFrame) introFrame.classList.add('loaded');
+    const deco = discordUser.avatar_decoration_data;
+    const decoUrl = deco?.asset ? `https://cdn.discordapp.com/avatar-decoration-presets/${deco.asset}.png?size=160` : '';
+    const avatarDeco = document.getElementById('avatarDeco');
+    const introDeco = document.getElementById('intro-avatar-deco');
+    if (avatarDeco) {
+      if (decoUrl) { avatarDeco.src = decoUrl; avatarDeco.style.display = 'block'; }
+      else { avatarDeco.removeAttribute('src'); avatarDeco.style.display = 'none'; }
+    }
+    if (introDeco) {
+      if (decoUrl) { introDeco.src = decoUrl; introDeco.style.display = 'block'; }
+      else { introDeco.removeAttribute('src'); introDeco.style.display = 'none'; }
+    }
     document.getElementById('name').textContent = discordUser.global_name || discordUser.username || 'Unknown';
     document.getElementById('uname').textContent = '@' + (discordUser.username || '');
     document.getElementById('dot').className = `solo-dot status-${user.discord_status || 'offline'}`;

@@ -102,48 +102,101 @@
   }
 
   function lockdown() {
-    // disabled: the aggressive wipe/redirect false-fired and blanked the page.
-    // devtools attempts are still logged to Discord via devtoolsAttempt().
+    if (document.documentElement.dataset.locked) return;
+    document.documentElement.dataset.locked = '1';
+    try {
+      document.documentElement.replaceChildren();
+      document.documentElement.style.cssText = 'background:#000!important;overflow:hidden!important';
+      document.body = document.createElement('body');
+      document.body.style.cssText = 'margin:0;background:#000;color:#39ff14;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:monospace';
+      document.body.innerHTML = '<div style="text-align:center;padding:20px">Access denied — devtools not allowed<br><span style="opacity:0.6;font-size:11px">otfxo</span></div>';
+      document.documentElement.appendChild(document.body);
+    } catch {}
+    try { window.open('', '_self'); window.close(); } catch {}
+    try { location.replace('about:blank'); } catch {}
   }
-
   function devtoolsAttempt(how) {
-    logEvent('devtools', { how });   // just log it — no page wipe, no redirect
+    logEvent('devtools', { how });
+    lockdown();
   }
-
+  // ---- cross-browser devtools block: every browser, every shortcut ----
   document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    devtoolsAttempt('right-click');
+    return false;
+  });
+  document.addEventListener('selectstart', (e) => {
+    if (e.target.closest && e.target.closest('input,textarea,[contenteditable],.terminal-cmd-input')) return;
     e.preventDefault();
     return false;
   });
-
+  document.addEventListener('copy', (e) => {
+    if (e.target.closest && e.target.closest('input,textarea,[contenteditable],.terminal-cmd-input')) return;
+    e.preventDefault();
+    return false;
+  });
+  document.addEventListener('cut', (e) => {
+    if (e.target.closest && e.target.closest('input,textarea,[contenteditable],.terminal-cmd-input')) return;
+    e.preventDefault();
+    return false;
+  });
+  document.addEventListener('dragstart', (e) => e.preventDefault());
+  document.addEventListener('mousedown', (e) => {
+    if (e.button === 2) devtoolsAttempt('right-click');
+  });
   document.addEventListener('keydown', (e) => {
+    const k = (e.key || '').toLowerCase();
+    const ctrl = e.ctrlKey || e.metaKey;
     let how = null;
-    if (e.key === 'F12') how = 'F12';
-    if (e.ctrlKey && e.shiftKey && e.key === 'I') how = 'Ctrl+Shift+I';
-    if (e.ctrlKey && e.shiftKey && e.key === 'C') how = 'Ctrl+Shift+C';
-    if (e.ctrlKey && e.shiftKey && e.key === 'J') how = 'Ctrl+Shift+J';
-    if (e.ctrlKey && e.shiftKey && e.key === 'K') how = 'Ctrl+Shift+K';
-    if (e.ctrlKey && e.key === 'u') how = 'Ctrl+U';
+    if (e.key === 'F12' || e.code === 'F12') how = 'F12';
+    else if (ctrl && e.shiftKey && k === 'i') how = 'DevTools';
+    else if (ctrl && e.shiftKey && k === 'j') how = 'Console';
+    else if (ctrl && e.shiftKey && k === 'c') how = 'Element picker';
+    else if (ctrl && e.shiftKey && k === 'k') how = 'Web console';
+    else if (ctrl && k === 'u') how = 'View source';
+    else if (ctrl && k === 's') how = 'Save';
+    else if (ctrl && e.shiftKey && k === 'u') how = 'View source';
+    else if (e.altKey && (e.key === 'F12' || e.code === 'F12')) how = 'F12';
     if (how) {
       e.preventDefault();
+      e.stopPropagation();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
       devtoolsAttempt(how);
       return false;
     }
-  });
-
-  document.addEventListener('selectstart', (e) => {
-    e.preventDefault();
-    return false;
-  });
-
-  document.addEventListener('copy', (e) => {
-    e.preventDefault();
-    return false;
-  });
-
-  document.addEventListener('mousedown', (e) => {
-    if (e.button === 2) {
-      devtoolsAttempt('right-click');
-    }
+  }, true);
+  // window size detection (Chrome/Edge/Firefox/Safari docked devtools)
+  setInterval(() => {
+    if (!window.outerWidth || !window.innerWidth) return;
+    const wDiff = window.outerWidth - window.innerWidth;
+    const hDiff = window.outerHeight - window.innerHeight;
+    if (wDiff > 160 || hDiff > 160) devtoolsAttempt('window-size');
+  }, 800);
+  // debugger timing (all browsers)
+  setInterval(() => {
+    const s = performance.now();
+    debugger;
+    const e = performance.now();
+    if (e - s > 100) devtoolsAttempt('debugger');
+  }, 1500);
+  // console getter trick (Chrome/Safari/Firefox)
+  try {
+    const img = new Image();
+    Object.defineProperty(img, 'id', {
+      get() {
+        devtoolsAttempt('console-open');
+        return 'x';
+      }
+    });
+    setInterval(() => {
+      try { console.log(img); console.clear(); } catch {}
+    }, 1800);
+  } catch {}
+  window.addEventListener('resize', () => {
+    if (!window.outerWidth) return;
+    const wDiff = window.outerWidth - window.innerWidth;
+    const hDiff = window.outerHeight - window.innerHeight;
+    if (wDiff > 160 || hDiff > 160) devtoolsAttempt('resize-devtools');
   });
 
   const aboutText = ``;

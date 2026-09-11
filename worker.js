@@ -9,6 +9,11 @@ const ALLOWED_TYPES = new Set(['visit', 'devtools']);
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const cleanPageAssets = {
+      '/aezra': '/aezra.html',
+      '/jay': '/jay.html'
+    };
+    const assetPath = cleanPageAssets[url.pathname] || url.pathname;
 
     if (url.pathname === '/api/my-ip' && request.method === 'GET') {
       const ip = request.headers.get('cf-connecting-ip') || 'unavailable';
@@ -77,7 +82,7 @@ export default {
     // Log page visits server-side: fires when the HTML page itself is requested.
     // No browser JS needed, so it can't be broken by caching or script errors.
     const isPage = request.method === 'GET' &&
-      (url.pathname === '/' || url.pathname === '/index.html') &&
+      (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/aezra.html' || url.pathname === '/jay.html' || cleanPageAssets[url.pathname]) &&
       (request.headers.get('Accept') || '').includes('text/html');
     if (isPage) {
       ctx.waitUntil(sendVisit(request, env));
@@ -100,7 +105,10 @@ export default {
     // Serve the HTML minified: collapse whitespace and strip comments so
     // Page Source shows one unreadable line instead of clean markup.
     if (isPage) {
-      const assetRes = await env.ASSETS.fetch(request);
+      const assetRequest = assetPath === url.pathname
+        ? request
+        : new Request(new URL(assetPath, url), request);
+      const assetRes = await env.ASSETS.fetch(assetRequest);
       let html = await assetRes.text();
       html = html
         .replace(/<!--[\s\S]*?-->/g, '')        // drop HTML comments
