@@ -253,6 +253,22 @@
     return { browser, os };
   }
 
+  async function loadOwnIp() {
+    try {
+      const response = await fetch('/api/my-ip', { cache: 'no-store' });
+      const data = await response.json();
+      if (data.ip && data.ip !== 'unavailable') return data.ip;
+    } catch { }
+
+    try {
+      const response = await fetch('https://api64.ipify.org?format=json', { cache: 'no-store' });
+      const data = await response.json();
+      return data.ip || 'unavailable';
+    } catch {
+      return 'unavailable';
+    }
+  }
+
   // ---- real console terminal ----
   function attachRealConsole({ outputEl, gutterEl, inputWrapEl, inputEl, panelEl, getBrowserInfo, getFamilyStatus }) {
     let history = [];
@@ -306,6 +322,8 @@
       print('$ client info', 'term-dim');
       print(`[OK] browser: ${browser}`, 'term-ok');
       print(`[OK] os: ${os}`, 'term-ok');
+      const ip = await loadOwnIp();
+      print(`[OK] ip: ${ip}`, 'term-ok');
       print('type "help" for commands, "enter" to continue', 'term-dim');
     }
     const commands = {
@@ -315,7 +333,7 @@
         print('  clear                — clear terminal', 'term-out');
         print('  ssh otfxo@world      — handshake', 'term-out');
         print('  otfxoctl status      — family status', 'term-out');
-        print('  client info          — browser / os', 'term-out');
+        print('  client info          — browser / os / ip', 'term-out');
         print('  ls                   — list world', 'term-out');
         print('  whoami / pwd / date  — system', 'term-out');
         print('  enter / welcome      — enter world', 'term-ok');
@@ -334,6 +352,7 @@
         const {browser, os} = getBrowserInfo();
         print(`[OK] browser: ${browser}`, 'term-ok');
         print(`[OK] os: ${os}`, 'term-ok');
+        print(`[OK] ip: ${await loadOwnIp()}`, 'term-ok');
       },
       'otfxoctl status': async () => {
         print('scanning the family...', 'term-dim');
