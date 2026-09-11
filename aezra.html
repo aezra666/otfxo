@@ -312,9 +312,8 @@ body::before {
   box-shadow: none;
   background: transparent;
 }
-/* keep avatar visible in console — intro must be discord avatar */
-.console-mode .intro-avatar-wrap { display: flex; margin: 8px 0 12px; }
-.console-mode .intro-avatar-frame { width: 86px; height: 86px; }
+/* Keep the console view focused on the terminal. */
+.console-mode .intro-avatar-wrap { display: none; }
 
 .intro-text-box {
   min-height: 30px;
