@@ -197,6 +197,7 @@ function createParticleField() {
 }
 
 const stage = document.getElementById('stage');
+stage.classList.add('show');
 const id = stage.dataset.userId;
 const banner = stage.dataset.banner;
 document.getElementById('bg').style.backgroundImage = `url('${banner}')`;
