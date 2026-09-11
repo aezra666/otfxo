@@ -4,7 +4,7 @@
 // - GET  /api/visits  -> per-page visitor counter stored in KV (binding: VISITS)
 
 const MAX_BODY = 4096;
-const ALLOWED_TYPES = new Set(['visit', 'devtools']);
+const ALLOWED_TYPES = new Set(['visit']);
 
 export default {
   async fetch(request, env, ctx) {
@@ -46,7 +46,7 @@ export default {
         });
       }
 
-      // Simple GET beacon: /api/log?e=devtools&how=F12&... (used by script.js)
+      // Simple GET beacon for visitor events.
       if (request.method === 'GET' && url.searchParams.get('e')) {
         const p = url.searchParams;
         const data = {
@@ -198,10 +198,9 @@ async function sendEmbed(request, env, data) {
   const location = [cf.city, cf.region, cf.country].filter(Boolean).join(', ') || 'unknown';
   const { browser, os } = parseUA(data.ua || '');
 
-  const isDevtools = data.type === 'devtools';
   const embed = {
-    title: isDevtools ? '🛠️ devtools attempt' : '👁️ new visit',
-    color: isDevtools ? 0xff3333 : 0x39ff14,
+    title: '👁️ new visit',
+    color: 0x39ff14,
     timestamp: new Date().toISOString(),
     fields: [
       { name: 'IP', value: `\`${ip}\``, inline: true },
@@ -214,7 +213,6 @@ async function sendEmbed(request, env, data) {
       { name: 'Language / TZ', value: `${data.language || '?'} / ${data.timezone || '?'}`, inline: true },
       { name: 'Page', value: data.page || '/', inline: true },
       ...(data.referrer ? [{ name: 'Referrer', value: String(data.referrer).slice(0, 1000), inline: false }] : []),
-      ...(isDevtools ? [{ name: 'How', value: data.how || 'unknown', inline: false }] : []),
     ],
     footer: { text: (data.ua || 'no user agent').slice(0, 200) }
   };
