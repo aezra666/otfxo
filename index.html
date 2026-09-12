@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&amp;family=Playfair+Display:wght@400;600;700&amp;family=Orbitron:wght@400;600&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/gh/theajack/disable-devtool/disable-devtool.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/disable-devtool@0.3.9/disable-devtool.min.js"></script>
     <script>
-      const devtoolResult = DisableDevtool({
+      if (typeof DisableDevtool === 'function') {
+        const devtoolResult = DisableDevtool({
         disableMenu: true,
         clearLog: true,
         disableSelect: true,
@@ -16,8 +17,9 @@
         disableCut: true,
         disablePaste: true,
         detectors: 'all'
-      });
-      if (!devtoolResult.success) console.warn('DisableDevtool:', devtoolResult.reason);
+        });
+        if (!devtoolResult.success) console.warn('DisableDevtool:', devtoolResult.reason);
+      }
     </script>
     <script src="profile-config.js"></script>
     <script src="script.js?v=c583c0a" defer></script>
