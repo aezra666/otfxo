@@ -932,18 +932,28 @@ setInterval(() => {
 }, 100);
 
 const customCursor = document.getElementById('custom-cursor');
+const navbarHint = document.querySelector('.navbar-hint');
 if (customCursor && window.matchMedia('(pointer: fine)').matches) {
   document.addEventListener('pointermove', event => {
     customCursor.style.left = `${event.clientX}px`;
     customCursor.style.top = `${event.clientY}px`;
     customCursor.classList.add('is-visible');
-    customCursor.classList.toggle('is-interactive', Boolean(event.target.closest('button, a, input, label')));
+    customCursor.classList.toggle(
+      'is-interactive',
+      Boolean(event.target.closest('.card, .navbar-music-button, button, a, input, label'))
+    );
+    if (navbarHint) {
+      const overCard = Boolean(event.target.closest('.card'));
+      navbarHint.textContent = overCard ? 'CLICK TO PROCEED' : '';
+      navbarHint.classList.toggle('is-visible', overCard);
+    }
   });
   document.addEventListener('pointerleave', () => customCursor.classList.remove('is-visible'));
 }
 
 const cards = document.querySelectorAll('.card');
 const audio = document.getElementById('audio');
+
 cards.forEach(card => {
   const banner = window.OTFXO_PROFILES?.[card.dataset.userId]?.banner;
   const media = card.querySelector('.media-img');
@@ -977,3 +987,11 @@ document.querySelectorAll('.card').forEach(card => {
     if (page) window.location.href = page;
   });
 });
+
+const navbar = document.querySelector('.navbar');
+if (navbar) {
+  navbar.addEventListener('click', event => {
+    if (event.target.closest('button, a, input, label')) return;
+    document.querySelector('.intro-proceed')?.click();
+  });
+}

@@ -535,13 +535,15 @@ body::before {
 .solo-act { position:relative; width:100%; margin-top:16px; font-size:12px; text-align:left; }
 .solo-act .a-det { display:block; font-size:11px; opacity:0.6; }
 .visitor-eye { position:absolute; right:0; bottom:0; z-index:4; display:flex; align-items:center; justify-content:center; gap:4px; height:20px; color:rgba(255,255,255,0.78); opacity:1; border:0; background:transparent; box-shadow:none; filter:none; font-size:10px; line-height:1; white-space:nowrap; }
-.top-visitor-eye { position:absolute; top:12px; right:12px; z-index:4; }
+.top-visitor-eye { position:absolute; bottom:12px; right:12px; z-index:4; }
 .visitor-eye svg { width:18px; height:11px; overflow:visible; }
 .visitor-eye-lid { fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; }
 .visitor-eye-iris { fill:rgba(255,255,255,0.28); stroke:currentColor; stroke-width:1.1; }
 .visitor-eye-pupil { fill:currentColor; }
 .visitor-eye-shine { fill:#fff; }
 .visitor-count { font-variant-numeric:tabular-nums; }
+.visitor-eye.is-loading { animation: visitor-pulse 1s ease-in-out infinite; }
+@keyframes visitor-pulse { 50% { opacity:0.45; transform:scale(1.08); } }
 .back { position:fixed; top:18px; left:18px; z-index:60; color:#5a6472; text-decoration:none; font-size:0.8rem; }
 .back:hover { color:#fff; }
 

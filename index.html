@@ -22,6 +22,7 @@
       }
     </script>
     <script src="profile-config.js"></script>
+    <script src="music.js" defer></script>
     <script src="script.js?v=c583c0a" defer></script>
     <link  rel="icon" type="img/png" href="https://file.garden/ap_Ebnzi9V7bLTDs/6212485181ca055f760855d98d3ee4bc.gif">
 </head>
@@ -57,6 +58,25 @@
         <div class="logo-container">
             <div class="logo-text">𝗢𝗧𝗙𝗫𝗢</div>
             <img class="logo-img" src="https://file.garden/ap_Ebnzi9V7bLTDs/647D7A1D-FDCF-4AEA-AE2E-A665B29F306C.png" alt="logo">
+        </div>
+        <span class="navbar-hint" aria-live="polite"></span>
+        <button class="navbar-music-button" type="button" aria-label="Open music list" aria-expanded="false">&#9835;</button>
+        <div class="music-menu" hidden>
+          <div class="music-menu-heading">
+            <span>Music</span>
+            <button class="music-close" type="button" aria-label="Close music list">×</button>
+          </div>
+          <p class="music-status" aria-live="polite"></p>
+          <div class="music-controls" aria-label="Playback controls">
+            <button class="music-control-button" type="button" data-action="previous" aria-label="Previous song">&#124;&lt;</button>
+            <button class="music-control-button music-play-button" type="button" data-action="play" aria-label="Play song">&#9654;</button>
+            <button class="music-control-button" type="button" data-action="next" aria-label="Next song">&gt;&#124;</button>
+          </div>
+          <label class="music-volume">
+            <span aria-hidden="true">VOL</span>
+            <input type="range" min="0" max="1" step="0.01" value="0.35" aria-label="Volume">
+          </label>
+          <div class="music-track-list"></div>
         </div>
     </nav>
 
@@ -139,6 +159,6 @@
 </div>
 </div>
     </section>
-     <audio id="audio"></audio> 
+    <audio id="audio"></audio>
 </body>
 </html>

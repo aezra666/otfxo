@@ -461,6 +461,14 @@ async function loadOwnIp() {
 async function loadVisitCount() {
   const outputs = document.querySelectorAll('.visitor-count');
   if (!outputs.length) return;
+  const visitorEyes = [...outputs]
+    .map(output => output.closest('.visitor-eye'))
+    .filter(Boolean);
+  visitorEyes.forEach(visitorEye => visitorEye.classList.add('is-loading'));
+
+  const finishLoading = () => {
+    visitorEyes.forEach(visitorEye => visitorEye.classList.remove('is-loading'));
+  };
 
   try {
     const response = await fetch(`/api/visits?page=${encodeURIComponent(location.pathname)}`, { cache: 'no-store' });
@@ -476,12 +484,14 @@ async function loadVisitCount() {
         const current = Math.round(1 + (target - 1) * easedProgress);
         outputs.forEach(output => { output.textContent = current.toLocaleString(); });
         if (progress < 1) requestAnimationFrame(animateCount);
+        else finishLoading();
       }
 
       requestAnimationFrame(animateCount);
     }
   } catch {
     outputs.forEach(output => { output.textContent = '\u2014'; });
+    finishLoading();
   }
 }
 
