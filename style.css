@@ -63,6 +63,25 @@ body::before {
   transition: opacity 0.8s ease;
 }
 
+.intro-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255,255,255,0.03) 0 1px,
+    rgba(0,0,0,0.26) 1px 3px
+  ), repeating-linear-gradient(
+    90deg,
+    rgba(255,255,255,0.025) 0 1px,
+    transparent 1px 4px
+  );
+  mix-blend-mode: screen;
+  z-index: 0;
+}
+
 .intro-panel.hidden {
   opacity: 0;
   pointer-events: none;
@@ -137,13 +156,7 @@ body::before {
 }
 
 .line-cursor {
-  display: inline-block;
-  width: 0.55ch;
-  height: 1em;
-  margin-left: 2px;
-  background: #39ff14;
-  vertical-align: -0.15em;
-  animation: typewriter-cursor 0.7s infinite;
+  display: none;
 }
 
 .terminal-dot {
@@ -188,7 +201,12 @@ body::before {
   min-height: 0;
 }
 
+.intro-typewriter {
+  display: none;
+}
+
 .console-mode .intro-typewriter {
+  display: block;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -270,11 +288,11 @@ body::before {
   align-items: center;
   font-size: 1.1rem;
   color: #ffffff;
-  border-right: 2px solid #ffffff;
+  border-right: none;
   text-align: left;
   min-height: 60px;
   padding: 20px;
-  animation: typewriter-cursor 0.7s infinite;
+  animation: none;
   margin-bottom: auto;
   margin-top: -50px;
   white-space: pre-wrap;
@@ -948,11 +966,11 @@ html, body {
   background: url('https://file.garden/ap_Ebnzi9V7bLTDs/3d-crystal-mouse-cursor-pointer-on-transparent-background-free-png.png') center / contain no-repeat;
   pointer-events: none;
   opacity: 0;
-  transform: translate(-50%, -50%);
+  transform: translate(-11px, -9px);
   transition: transform 0.18s ease, opacity 0.18s ease;
 }
 .custom-cursor.is-visible { opacity: 1; }
-.custom-cursor.is-interactive { transform: translate(-50%, -50%) scale(1.25); }
+.custom-cursor.is-interactive { transform: translate(-11px, -9px) scale(1.25); }
 @media (pointer: fine) { *, *::before, *::after { cursor: none !important; } }
 @media (pointer: coarse) { .custom-cursor { display: none; } }
 

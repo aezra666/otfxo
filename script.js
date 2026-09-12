@@ -170,9 +170,6 @@
     function revealNext() {
       if (index >= characters.length) {
         element.classList.remove('typing');
-        const cursorNode = document.createElement('span');
-        cursorNode.className = 'line-cursor';
-        element.appendChild(cursorNode);
         if (callback) callback();
         return;
       }
@@ -432,6 +429,8 @@
   }
 
   window.addEventListener('load', () => {
+    document.body.classList.add('crt-mode');
+
     const consoleReadKey = `otfxo-console-read-v3:${location.pathname}`;
     const introPanel = document.getElementById('intro-panel');
     const introContent = document.querySelector('.intro-content');
@@ -446,30 +445,20 @@
     const consoleWasRead = sessionStorage.getItem(consoleReadKey) === 'true';
     const familyStatusPromise = getFamilyStatus();
 
-    typeWriter(introTypewriter, '𝗢𝗧𝗙𝗫𝗢', 80, () => {
-      proceedBtn.style.display = 'block';
-      proceedBtn.disabled = false;
-
-      const otfxoShuffleInterval = setInterval(() => {
-        const stillOnLogoScreen =
-          !introContent.classList.contains('console-mode') &&
-          !introPanel.classList.contains('hidden');
-
-        if (!stillOnLogoScreen) {
-          clearInterval(otfxoShuffleInterval);
-          return;
-        }
-
-        typeWriter(introTypewriter, '𝗢𝗧𝗙𝗫𝗢', 80);
-      }, 5000);
-    });
+    introTypewriter.textContent = '';
+    proceedBtn.style.display = 'block';
+    proceedBtn.disabled = false;
 
     let realTerm = null;
     function ensureRealTerm() {
       if (realTerm) return realTerm;
       introTypewriter.replaceChildren();
       if (introGutter) introGutter.replaceChildren();
-      const g0 = document.createElement('span'); g0.textContent = '1'; introGutter.appendChild(g0);
+      if (introGutter) {
+        const g0 = document.createElement('span');
+        g0.textContent = '1';
+        introGutter.appendChild(g0);
+      }
       termInputWrap.style.display = 'flex';
       realTerm = attachRealConsole({
         outputEl: introTypewriter,

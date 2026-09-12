@@ -49,7 +49,6 @@ function typeWriter(element, text, speed = 40, callback = null, gutterElement = 
   function revealNext() {
     if (index >= characters.length) {
       element.classList.remove('typing');
-      const cursor = document.createElement('span'); cursor.className = 'line-cursor'; element.appendChild(cursor);
       if (callback) callback();
       return;
     }
@@ -284,12 +283,12 @@ function updateIntroButton() {
   if (proceedButton) proceedButton.disabled = !(introTextFinished && introAvatarReady);
 }
 if (typewriter) {
-  typeWriter(typewriter, '𝗢𝗧𝗙𝗫𝗢', 55, () => {
-    introTextFinished = true;
-    updateIntroButton();
-  }, gutter);
+  typewriter.textContent = '';
+  introTextFinished = true;
+  updateIntroButton();
 }
 if (proceedButton && introPanel) {
+  proceedButton.disabled = false;
   proceedButton.addEventListener('click', () => {
     userPausedMusic = false;
     music.play().catch(() => {});

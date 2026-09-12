@@ -47,11 +47,11 @@ body {
   background: url('https://file.garden/ap_Ebnzi9V7bLTDs/3d-crystal-mouse-cursor-pointer-on-transparent-background-free-png.png') center / contain no-repeat;
   pointer-events: none;
   opacity: 0;
-  transform: translate(-50%, -50%);
+  transform: translate(-11px, -9px);
   transition: transform 0.18s ease, opacity 0.18s ease;
 }
 .custom-cursor.is-visible { opacity: 1; }
-.custom-cursor.is-interactive { transform: translate(-50%, -50%) scale(1.25); }
+.custom-cursor.is-interactive { transform: translate(-11px, -9px) scale(1.25); }
 @media (pointer: fine) { *, *::before, *::after { cursor: none !important; } }
 @media (pointer: coarse) { .custom-cursor { display: none; } }
 
@@ -93,6 +93,25 @@ body::before {
   z-index: 9999;
   opacity: 1;
   transition: opacity 0.8s ease;
+}
+
+.intro-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255,255,255,0.03) 0 1px,
+    rgba(0,0,0,0.26) 1px 3px
+  ), repeating-linear-gradient(
+    90deg,
+    rgba(255,255,255,0.025) 0 1px,
+    transparent 1px 4px
+  );
+  mix-blend-mode: screen;
+  z-index: 0;
 }
 
 .intro-content { position: relative; z-index: 2; }
@@ -639,7 +658,7 @@ body::before {
 @media (max-width: 520px) {
   .audio-player { bottom: 16px; gap: 8px; }
 }
-body.crt-mode::after { content:''; position:fixed; inset:0; z-index:50; pointer-events:none; opacity:0.28; background:repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0 1px, rgba(0,0,0,0.22) 1px 3px), repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 4px); mix-blend-mode:screen; }
+body.crt-mode::after { content:''; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.28; background:repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0 1px, rgba(0,0,0,0.22) 1px 3px), repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 4px); mix-blend-mode:screen; background-attachment: fixed; animation: none; }
 body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
 
 @media (max-width: 520px) {
