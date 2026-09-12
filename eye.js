@@ -205,26 +205,7 @@ document.querySelectorAll('.social-icon[data-icon]').forEach(icon => {
     icon.closest('.social-link')?.classList.add('has-icon');
   }
 });
-const copyLinkButton = document.querySelector('.copy-link');
-if (copyLinkButton) {
-  copyLinkButton.addEventListener('click', async () => {
-    const pageUrl = window.location.href.split('#')[0];
-    try {
-      await navigator.clipboard.writeText(pageUrl);
-    } catch {
-      const helper = document.createElement('textarea');
-      helper.value = pageUrl;
-      helper.style.position = 'fixed';
-      helper.style.opacity = '0';
-      document.body.appendChild(helper);
-      helper.select();
-      document.execCommand('copy');
-      helper.remove();
-    }
-    copyLinkButton.textContent = '\u2713';
-    setTimeout(() => { copyLinkButton.textContent = '\uD83D\uDD17'; }, 1400);
-  });
-}
+
 const banner = window.OTFXO_PROFILES?.[id]?.banner || '';
 const background = document.getElementById('bg');
 if (background) background.style.backgroundImage = `url('${banner}')`;

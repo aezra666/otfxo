@@ -480,17 +480,17 @@ body::before {
   transition:transform 0.6s cubic-bezier(.2,.8,.2,1), box-shadow 0.35s ease;
 }
 .solo-card::before { display:none; }
-.solo-card > .solo-inner, .solo-card > .top-visitor-eye, .solo-card > .copy-link { transition:opacity 0.45s ease, transform 0.45s ease; }
+.solo-card > .solo-inner, .solo-card > .top-visitor-eye { transition:opacity 0.45s ease, transform 0.45s ease; }
 .card-back { position:absolute; inset:0; z-index:6; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; border-radius:22px; overflow:hidden; background:rgba(8,9,12,0.12); color:#fff; opacity:0; visibility:hidden; pointer-events:none; transform:scaleX(0.05); transition:opacity 0.45s ease, visibility 0.45s ease, transform 0.45s cubic-bezier(.2,.8,.2,1); }
 .card-back::before { content:''; position:absolute; inset:-18px; z-index:-1; background:inherit; backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px); }
 .card-back > * { position:relative; z-index:1; }
 .card-back { pointer-events:none; }
 .solo-card.is-flipped .card-back { opacity:1; visibility:visible; pointer-events:auto; transform:scaleX(1); }
-.solo-card.is-flipped > .solo-inner, .solo-card.is-flipped > .top-visitor-eye, .solo-card.is-flipped > .copy-link { opacity:0; pointer-events:none; transform:scaleX(0.05); }
+.solo-card.is-flipped > .solo-inner, .solo-card.is-flipped > .top-visitor-eye { opacity:0; pointer-events:none; transform:scaleX(0.05); }
 .card-wrap.is-tilting .solo-card, .card-wrap.is-tilting .card-edge { transition:transform 0.08s ease-out; }
 .card-back-title { color:rgba(255,255,255,0.65); font-size:10px; letter-spacing:0.18em; text-transform:uppercase; }
 .card-back-hint { color:rgba(255,255,255,0.42); font-size:9px; letter-spacing:0.08em; text-transform:uppercase; }
-.solo-card.is-focused .solo-info, .solo-card.is-focused .top-visitor-eye, .solo-card.is-focused .copy-link { filter:blur(5px); opacity:0.3; }
+.solo-card.is-focused .solo-info, .solo-card.is-focused .top-visitor-eye { filter:blur(5px); opacity:0.3; }
 .solo-card.is-focused .solo-avatar { filter:none; opacity:1; transform:scale(1.04); }
 .card-edge {
   position: absolute; inset: 0; width: 100%; height: 100%;
@@ -556,8 +556,7 @@ body::before {
 body.crt-mode::after { content:''; position:fixed; inset:0; z-index:50; pointer-events:none; opacity:0.28; background:repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0 1px, rgba(0,0,0,0.22) 1px 3px), repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 4px); mix-blend-mode:screen; }
 body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
 
-.copy-link { position:absolute; top:56px; left:50%; display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; margin:0; padding:0; border:0; border-radius:50%; background:transparent; color:rgba(255,255,255,0.78); cursor:pointer; font:12px/1 'Segoe UI Symbol', sans-serif; transform:translateX(-50%); transition:color 0.2s ease; }
-.copy-link:hover, .copy-link:focus-visible { color:#fff; outline:none; }
+
 
 @media (max-width: 520px) {
   .card-wrap { height:390px; }
@@ -610,7 +609,6 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
         <div class="solo-info">
           <div class="solo-name" id="name">…</div>
           <div class="solo-user" id="uname"></div>
-          <button class="copy-link" type="button" aria-label="Copy page link" title="Copy page link">&#128279;</button>
           <div class="solo-status" id="statusBox"></div>
           <div class="solo-act"><span id="actName"></span><span class="a-det" id="actDet"></span></div>
         </div>
