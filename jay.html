@@ -686,7 +686,20 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
 
   <audio id="music" loop></audio>
 
-<script disable-devtool-auto="" src="https://cdn.jsdelivr.net/npm/disable-devtool@latest"></script>
+<script src="https://cdn.jsdelivr.net/gh/theajack/disable-devtool/disable-devtool.min.js"></script>
+<script>
+  const devtoolResult = DisableDevtool({
+    disableMenu: true,
+    clearLog: true,
+    disableSelect: true,
+    disableInputSelect: false,
+    disableCopy: true,
+    disableCut: true,
+    disablePaste: true,
+    detectors: 'all'
+  });
+  if (!devtoolResult.success) console.warn('DisableDevtool:', devtoolResult.reason);
+</script>
 <script src="profile-config.js"></script>
 <script src="eye.js?v=audio-3"></script>
 </body>
