@@ -938,6 +938,24 @@ html, body {
   transition: opacity 0.1s;
 }
 
+.custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  width: 34px;
+  height: 34px;
+  background: url('https://file.garden/ap_Ebnzi9V7bLTDs/3d-crystal-mouse-cursor-pointer-on-transparent-background-free-png.png') center / contain no-repeat;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+.custom-cursor.is-visible { opacity: 1; }
+.custom-cursor.is-interactive { transform: translate(-50%, -50%) scale(1.25); }
+@media (pointer: fine) { *, *::before, *::after { cursor: none !important; } }
+@media (pointer: coarse) { .custom-cursor { display: none; } }
+
 @keyframes bio-shake {
   0%   { transform: translate(0, 0); }
   20%  { transform: translate(-3px, 2px) rotate(-3deg); }

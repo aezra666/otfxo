@@ -198,6 +198,16 @@ function createParticleField() {
 
 const stage = document.getElementById('stage');
 stage.classList.add('show');
+const customCursor = document.getElementById('custom-cursor');
+if (customCursor && window.matchMedia('(pointer: fine)').matches) {
+  document.addEventListener('pointermove', event => {
+    customCursor.style.left = `${event.clientX}px`;
+    customCursor.style.top = `${event.clientY}px`;
+    customCursor.classList.add('is-visible');
+    customCursor.classList.toggle('is-interactive', Boolean(event.target.closest('button, a, input, label')));
+  });
+  document.addEventListener('pointerleave', () => customCursor.classList.remove('is-visible'));
+}
 const id = stage.dataset.userId;
 document.querySelectorAll('.social-icon[data-icon]').forEach(icon => {
   if (icon.dataset.icon) {
@@ -211,37 +221,17 @@ const background = document.getElementById('bg');
 if (background) background.style.backgroundImage = `url('${banner}')`;
 
 const music = document.getElementById('music');
-music.crossOrigin = 'anonymous'; // must be set BEFORE src so Web Audio can read the stream
 music.src = window.OTFXO_PROFILES?.[id]?.music || '';
-music.volume = 0.5;
-
-// If the audio host refuses CORS, reload without it: plain playback, no visualizer.
-let bassAllowed = true;
-music.addEventListener('error', () => {
-  if (!bassAllowed) return;
-  bassAllowed = false;
-  music.removeAttribute('crossorigin');
-  music.src = window.OTFXO_PROFILES?.[id]?.music || '';
-  music.load();
-  music.play().catch(() => {});
-}, { once: true });
-
-// ---- bass-reactive card edge: the card's bottom border softly waves with the music ----
-let bassInitialized = false;
-let audioCtx = null, analyser = null, gainNode = null;
-let musicMuted = false;
-let musicVolume = 0.5;
+music.volume = 0.8;
+let userPausedMusic = false;
 
 const cardWrap = document.querySelector('.card-wrap');
 const soloCard = document.querySelector('.solo-card');
-const cardEdge = document.querySelector('.card-edge');
-const edgePath = document.getElementById('cardEdgePath');
 
 let cardTilt = { rotateX: 0, rotateY: 0 };
 function updateCardTransform() {
   if (!soloCard) return;
   soloCard.style.transform = `perspective(900px) rotateX(${cardTilt.rotateX}deg) rotateY(${cardTilt.rotateY}deg) translateY(-5px) scale(1.015)`;
-  if (cardEdge) cardEdge.style.transform = `perspective(900px) rotateX(${cardTilt.rotateX}deg) rotateY(${cardTilt.rotateY}deg) translateY(-5px) scale(1.015)`;
 }
 
 if (cardWrap && soloCard) {
@@ -271,124 +261,16 @@ if (cardWrap && soloCard) {
   });
 }
 
-let waveAmp = 0, waveTarget = 0;
-const WAVE_MAX = 16; // px — soft but with a bit of bite
-
-function applyMusicOutput() {
-  music.muted = musicMuted;
-  music.volume = musicVolume;
-  if (gainNode && audioCtx) gainNode.gain.setTargetAtTime(musicMuted ? 0 : musicVolume, audioCtx.currentTime, 0.02);
-}
-function setMusicMuted(muted) { musicMuted = muted; applyMusicOutput(); }
-function setMusicVolume(vol) { musicVolume = Math.max(0, Math.min(1, vol)); applyMusicOutput(); }
-
-const EDGE_POINTS = 96;
-let edgeSamples = new Float32Array(EDGE_POINTS + 1); // -1..1, smoothed audio along the edge
-
-function buildEdgePath(W, H, amp, samples) {
-  const r = 22, base = H - amp;
-  let d = `M ${r} 0 H ${W - r} A ${r} ${r} 0 0 1 ${W} ${r} V ${base - r} A ${r} ${r} 0 0 1 ${W - r} ${base}`;
-  const span = W - 2 * r;
-  for (let i = 1; i <= EDGE_POINTS; i++) {
-    const t = i / EDGE_POINTS;
-    const x = (W - r) - t * span;
-    const win = Math.sin(Math.PI * t); // flat at the corners
-    d += ` L ${x.toFixed(1)} ${(base + samples[i] * amp * win).toFixed(1)}`;
-  }
-  d += ` A ${r} ${r} 0 0 1 0 ${base - r} V ${r} A ${r} ${r} 0 0 1 ${r} 0 Z`;
-  return d;
-}
-
-function renderEdge() {
-  if (!cardWrap || !soloCard || !edgePath) return;
-  const d = buildEdgePath(cardWrap.clientWidth, cardWrap.clientHeight, waveAmp, edgeSamples);
-  soloCard.style.clipPath = `path('${d}')`;
-  soloCard.style.webkitClipPath = `path('${d}')`;
-  edgePath.setAttribute('d', d);
-}
-renderEdge();
-window.addEventListener('resize', renderEdge);
-
-function initBassReactive(audioEl) {
-  if (bassInitialized) return;
-  bassInitialized = true;
-  if (!edgePath) return;
-
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-
-  const source = audioCtx.createMediaElementSource(audioEl);
-  analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 2048;
-  analyser.smoothingTimeConstant = 0.6;
-  gainNode = audioCtx.createGain();
-  gainNode.gain.value = musicMuted ? 0 : musicVolume;
-
-  source.connect(analyser);
-  analyser.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-
-  const wave = new Uint8Array(analyser.fftSize);
-  const freq = new Uint8Array(analyser.frequencyBinCount);
-  const bin = Math.floor(wave.length / EDGE_POINTS);
-
-  function loop() {
-    analyser.getByteTimeDomainData(wave);
-    analyser.getByteFrequencyData(freq);
-
-    // real waveform: average each slice of samples, then lightly smooth across neighbours
-    for (let i = 0; i <= EDGE_POINTS; i++) {
-      const start = Math.min(i * bin, wave.length - bin);
-      let sum = 0;
-      for (let j = 0; j < bin; j++) sum += wave[start + j] - 128;
-      const v = sum / bin / 128; // -1..1
-      edgeSamples[i] += (v - edgeSamples[i]) * 0.6; // snappier follow
-    }
-    for (let i = 1; i < EDGE_POINTS; i++) edgeSamples[i] = (edgeSamples[i - 1] + edgeSamples[i] * 6 + edgeSamples[i + 1]) / 8; // lighter smoothing → small spikes
-
-    // loudness (with a bass lift) sets how far the edge is allowed to move
-    let level = 0, bass = 0;
-    for (let i = 0; i < freq.length; i++) level += freq[i];
-    for (let i = 0; i < 8; i++) bass += freq[i];
-    level = level / freq.length / 255; bass = bass / 8 / 255;
-    waveTarget = Math.min(1, level * 1.6 + bass * 0.9) * WAVE_MAX;
-    waveAmp += (waveTarget - waveAmp) * 0.15;
-
-    renderEdge();
-    requestAnimationFrame(loop);
-  }
-  loop();
-}
-
-function resumeAudioGraph() {
-  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
-}
-
-music.addEventListener('play', () => {
-  resumeAudioGraph();
-  if (!bassAllowed) return;
-  try { initBassReactive(music); }
-  catch { }
-});
-
 // Coming back to the page (back button, tab switch, lock screen): iOS suspends the
 // audio graph and pauses media. Wake both up again instead of needing a reload.
 function wakeMusic() {
-  resumeAudioGraph();
-  if (stage.classList.contains('show') && music.paused) music.play().catch(() => {});
+  const intro = document.getElementById('intro-panel');
+  const introVisible = intro && !intro.classList.contains('hidden');
+  if (!introVisible && !userPausedMusic && stage.classList.contains('show') && music.paused) music.play().catch(() => {});
 }
 window.addEventListener('pageshow', event => { if (event.persisted) wakeMusic(); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wakeMusic(); });
 window.addEventListener('focus', wakeMusic);
-// If autoplay is blocked on return, the next tap anywhere restarts it.
-document.addEventListener('pointerdown', event => {
-  const intro = document.getElementById('intro-panel');
-  if (intro && !intro.classList.contains('hidden')) {
-    if (event.target.closest('.intro-proceed')) wakeMusic();
-    return;
-  }
-  if (stage.classList.contains('show')) wakeMusic();
-}, { passive: true });
 
 const panel = document.getElementById('intro-panel');
 const content = document.querySelector('.intro-content');
@@ -396,7 +278,7 @@ const typewriter = document.querySelector('.intro-typewriter');
 const gutter = document.querySelector('.code-gutter');
 const proceedButton = document.querySelector('.intro-proceed');
 const introPanel = document.getElementById('intro-panel');
-let introTextFinished = false;
+let introTextFinished = true;
 let introAvatarReady = false;
 function updateIntroButton() {
   if (proceedButton) proceedButton.disabled = !(introTextFinished && introAvatarReady);
@@ -409,6 +291,8 @@ if (typewriter) {
 }
 if (proceedButton && introPanel) {
   proceedButton.addEventListener('click', () => {
+    userPausedMusic = false;
+    music.play().catch(() => {});
     introPanel.classList.add('hidden');
     setTimeout(() => { introPanel.style.display = 'none'; }, 850);
   });
@@ -416,96 +300,96 @@ if (proceedButton && introPanel) {
 const consoleReadKey = `otfxo-console-read-v3:${location.pathname}`;
 const consoleWasRead = sessionStorage.getItem(consoleReadKey) === 'true';
 
-function setupVisualControls() {
-  const tools = document.querySelector('.visual-tools');
-  const toggle = document.querySelector('.visual-toggle');
-  const blurControl = document.getElementById('scene-blur');
-  const alphaControl = document.getElementById('card-alpha');
-  const glowControl = document.getElementById('neon-glow');
-  const crtControl = document.getElementById('crt-effect');
-  const motionControl = document.getElementById('reduce-motion');
-  const muteControl = document.getElementById('mute-audio');
-  const volumeControl = document.getElementById('music-volume');
-  const resetControl = document.getElementById('visual-reset');
-  const accentSwatches = [...document.querySelectorAll('.accent-swatch')];
-  const accentPicker = document.getElementById('accent-picker');
-  if (!tools || !toggle || !blurControl || !alphaControl || !glowControl) return;
+function setupAudioToggle() {
+  const audioToggle = document.getElementById('audio-toggle');
+  const audioPlayer = document.getElementById('audio-player');
+  if (!audioToggle && !audioPlayer) return;
 
-  const storageKey = `otfxo-visuals-v2:${location.pathname}`;
-  let saved = {};
-  try { saved = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { saved = {}; }
-  if (saved.blur !== undefined) blurControl.value = saved.blur;
-  if (saved.alpha !== undefined) alphaControl.value = saved.alpha;
-  if (saved.glow !== undefined) glowControl.value = saved.glow;
-  if (saved.crt !== undefined) crtControl.checked = saved.crt;
-  if (saved.motion !== undefined) motionControl.checked = saved.motion;
-  if (saved.mute !== undefined) muteControl.checked = saved.mute;
-  if (saved.volume !== undefined && volumeControl) volumeControl.value = saved.volume;
-  const savedAccent = saved.accent || '#b980ff';
-  accentPicker.value = savedAccent;
-  const savedSwatch = accentSwatches.find(swatch => swatch.dataset.accent === savedAccent);
-  if (savedSwatch) accentSwatches.forEach(swatch => swatch.classList.toggle('active', swatch === savedSwatch));
-
-  function applyVisuals() {
-    const blur = Number(blurControl.value);
-    const alpha = Number(alphaControl.value) / 100;
-    const glow = Number(glowControl.value);
-    const accent = accentSwatches.find(swatch => swatch.classList.contains('active'))?.dataset.accent || accentPicker.value || '#b980ff';
-    document.documentElement.style.setProperty('--scene-blur', `${blur}px`);
-    document.documentElement.style.setProperty('--card-alpha', alpha);
-    document.documentElement.style.setProperty('--neon-glow', `${glow}px`);
-    document.documentElement.style.setProperty('--accent-color', accent);
-    document.body.classList.toggle('crt-mode', crtControl.checked);
-    document.body.classList.toggle('reduced-motion', motionControl.checked);
-    const volume = volumeControl ? Number(volumeControl.value) : 50;
-    setMusicVolume(volume / 100);
-    setMusicMuted(muteControl.checked);
-    if (volumeControl) document.getElementById('music-volume-value').textContent = `${volume}%`;
-    document.getElementById('scene-blur-value').textContent = `${blur}px`;
-    document.getElementById('card-alpha-value').textContent = `${alphaControl.value}%`;
-    document.getElementById('neon-glow-value').textContent = `${glow}px`;
-    localStorage.setItem(storageKey, JSON.stringify({ blur, alpha: Number(alphaControl.value), glow, crt: crtControl.checked, motion: motionControl.checked, mute: muteControl.checked, volume, accent }));
+  if (audioPlayer) {
+    const playButton = audioPlayer.querySelector('[data-audio-action="toggle"]');
+    const progress = document.getElementById('audio-progress');
+    const progressFill = document.getElementById('audio-progress-fill');
+    const currentTime = document.getElementById('audio-current-time');
+    const duration = document.getElementById('audio-duration');
+    const volumeControl = document.getElementById('audio-volume');
+    let idleTimer;
+    const resetPlayerIdle = () => {
+      audioPlayer.classList.remove('is-idle');
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => audioPlayer.classList.add('is-idle'), 2800);
+    };
+    const formatTime = value => {
+      if (!Number.isFinite(value)) return '0:00';
+      return `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}`;
+    };
+    const syncPlayer = () => {
+      const isPaused = music.paused;
+      playButton.classList.toggle('is-playing', !isPaused);
+      playButton.setAttribute('aria-label', isPaused ? 'Play music' : 'Pause music');
+      playButton.setAttribute('aria-pressed', String(!isPaused));
+      audioPlayer.classList.toggle('is-paused', isPaused);
+      const percent = music.duration ? (music.currentTime / music.duration) * 100 : 0;
+      progressFill.style.width = `${percent}%`;
+      progress.setAttribute('aria-valuenow', String(Math.round(percent)));
+      currentTime.textContent = formatTime(music.currentTime);
+      duration.textContent = formatTime(music.duration);
+    };
+    const seekFromEvent = event => {
+      if (!music.duration) return;
+      const bounds = progress.getBoundingClientRect();
+      music.currentTime = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width)) * music.duration;
+    };
+    playButton.addEventListener('click', () => {
+      if (music.paused) {
+        userPausedMusic = false;
+        music.play().catch(() => {});
+      } else {
+        userPausedMusic = true;
+        music.pause();
+      }
+    });
+    audioPlayer.querySelector('[data-audio-action="back"]').addEventListener('click', () => { music.currentTime = 0; });
+    audioPlayer.querySelector('[data-audio-action="forward"]').addEventListener('click', () => { music.currentTime = Math.min(music.duration || 0, music.currentTime + 10); });
+    progress.addEventListener('click', seekFromEvent);
+    progress.addEventListener('keydown', event => { if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { music.currentTime += event.key === 'ArrowRight' ? 5 : -5; } });
+    volumeControl.addEventListener('input', event => { music.volume = Number(event.target.value); });
+    ['pointerenter', 'pointermove', 'focusin', 'click', 'input'].forEach(type => audioPlayer.addEventListener(type, resetPlayerIdle));
+    music.addEventListener('timeupdate', syncPlayer);
+    music.addEventListener('loadedmetadata', syncPlayer);
+    music.addEventListener('play', syncPlayer);
+    music.addEventListener('pause', syncPlayer);
+    music.addEventListener('error', syncPlayer);
+    syncPlayer();
+    resetPlayerIdle();
   }
 
-  toggle.addEventListener('click', () => {
-    const isOpen = tools.classList.toggle('open');
-    toggle.setAttribute('aria-expanded', String(isOpen));
+  if (!audioToggle) return;
+
+  const syncButton = () => {
+    const isPaused = music.paused;
+    audioToggle.textContent = isPaused ? 'Play' : 'Pause';
+    audioToggle.setAttribute('aria-label', isPaused ? 'Play music' : 'Pause music');
+  };
+
+  audioToggle.addEventListener('click', () => {
+    if (music.paused) {
+      userPausedMusic = false;
+      music.play().catch(() => {});
+    } else {
+      userPausedMusic = true;
+      music.pause();
+    }
+    syncButton();
   });
-  blurControl.addEventListener('input', applyVisuals);
-  alphaControl.addEventListener('input', applyVisuals);
-  glowControl.addEventListener('input', applyVisuals);
-  if (volumeControl) volumeControl.addEventListener('input', applyVisuals);
-  [crtControl, motionControl, muteControl].forEach(control => control.addEventListener('change', applyVisuals));
-  accentSwatches.forEach(swatch => swatch.addEventListener('click', () => {
-    accentSwatches.forEach(item => item.classList.toggle('active', item === swatch));
-    accentPicker.value = swatch.dataset.accent;
-    applyVisuals();
-  }));
-  accentPicker.addEventListener('input', () => {
-    accentSwatches.forEach(item => item.classList.remove('active'));
-    applyVisuals();
-  });
-  resetControl.addEventListener('click', () => {
-    localStorage.removeItem(storageKey);
-    blurControl.value = 6;
-    alphaControl.value = 38;
-    glowControl.value = 28;
-    crtControl.checked = false;
-    motionControl.checked = false;
-    muteControl.checked = false;
-    if (volumeControl) volumeControl.value = 50;
-    accentSwatches.forEach((swatch, index) => swatch.classList.toggle('active', index === 0));
-    accentPicker.value = '#b980ff';
-    applyVisuals();
-  });
-  document.addEventListener('keydown', event => {
-    if (event.key.toLowerCase() === 'p' && !['INPUT', 'BUTTON'].includes(document.activeElement?.tagName)) toggle.click();
-  });
-  applyVisuals();
+
+  music.addEventListener('play', syncButton);
+  music.addEventListener('pause', syncButton);
+  syncButton();
 }
 
 createParticleField();
-setupVisualControls();
+document.body.classList.add('crt-mode');
+setupAudioToggle();
 
 async function loadProfile() {
   try {
