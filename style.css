@@ -653,7 +653,7 @@ body::before {
 .music-volume input {
   flex: 1;
   min-width: 0;
-  accent-color: #1db954;
+  accent-color: #000000;
   cursor: pointer;
 }
 
@@ -679,8 +679,8 @@ body::before {
 
 .music-track-button:hover,
 .music-track-button.is-playing {
-  border-color: rgba(29, 185, 84, 0.6);
-  background: rgba(29, 185, 84, 0.12);
+  border-color: rgb(0, 0, 0);
+  background: rgb(0, 0, 0);
 }
 
 .music-track-number {
