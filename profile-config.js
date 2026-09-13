@@ -7,9 +7,9 @@ window.OTFXO_PROFILES = {
     banner: 'https://file.garden/ap_Ebnzi9V7bLTDs/download.gif',
     music: 'https://file.garden/ap_Ebnzi9V7bLTDs/Janice%20STFU.mp3'
   },
-  'PUT_DISCORD_ID_04_HERE': {
-    banner: '',
-    music: ''
+  '855390015940984853': {
+    banner: 'https://file.garden/ap_Ebnzi9V7bLTDs/d7ff7069ff4939400d34415d1de21543.gif',
+    music: 'https://file.garden/ap_Ebnzi9V7bLTDs/Chris%20Brown%20-%20Loyal%20(Lyrics)%20ft.%20Lil%20Wayne%2C%20Tyga.mp3'
   },
   'PUT_DISCORD_ID_05_HERE': {
     banner: '',

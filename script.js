@@ -981,7 +981,8 @@ document.querySelectorAll('.card').forEach(card => {
   card.addEventListener('click', () => {
     const pages = {
       '1034804876733071382': 'aezra',
-      '1483321828838477966': 'jay'
+      '1483321828838477966': 'jay',
+      '855390015940984853': 'chano',
     };
     const page = pages[card.dataset.userId];
     if (page) window.location.href = page;

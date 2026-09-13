@@ -17,8 +17,7 @@ export default {
     const cleanPageAssets = {
       '/aezra': '/aezra.html',
       '/jay': '/jay.html',
-      // Add a member by copying one of these ready slots and replacing the slug.
-      // '/member-04': '/member-04.html',
+     '/chano': 'chano.html'
       // '/member-05': '/member-05.html',
       // '/member-06': '/member-06.html',
       // '/member-07': '/member-07.html',
@@ -42,8 +41,8 @@ export default {
 
     const cleanPageRedirects = {
       '/aezra.html': '/aezra',
-      '/jay.html': '/jay'
-      // '/member-04.html': '/member-04',
+      '/jay.html': '/jay',
+      '/chano.html': '/chano'
       // '/member-05.html': '/member-05',
       // '/member-06.html': '/member-06',
       // '/member-07.html': '/member-07',
