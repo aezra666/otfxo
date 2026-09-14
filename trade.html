@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>live feed // otfxo</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100vh;
+    background: #070606;
+    color: #39ff14;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  body {
+    padding: 24px 16px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .wrap { width: 100%; max-width: 900px; }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(57,255,20,0.25);
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  h1 {
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0;
+    text-shadow: 0 0 6px rgba(57,255,20,0.6);
+  }
+  .status {
+    font-size: 12px;
+    color: rgba(57,255,20,0.55);
+  }
+  .status .dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #39ff14;
+    box-shadow: 0 0 6px rgba(57,255,20,0.9);
+    margin-right: 6px;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  #refresh-btn {
+    background: transparent;
+    border: 1px solid rgba(57,255,20,0.4);
+    color: #39ff14;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  #refresh-btn:hover { background: rgba(57,255,20,0.1); }
+  #refresh-btn:disabled { opacity: 0.4; cursor: default; }
+  .up { color: #39ff14; }
+  .down { color: #ff6b6b; }
+  #search {
+    width: 100%;
+    background: rgba(230,237,243,0.05);
+    border: 1px solid rgba(57,255,20,0.2);
+    color: #e6edf3;
+    font: inherit;
+    font-size: 13px;
+    padding: 9px 12px;
+    outline: 0;
+    margin-bottom: 12px;
+  }
+  #search::placeholder { color: rgba(230,237,243,0.3); }
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tab-btn {
+    background: transparent;
+    border: 1px solid rgba(57,255,20,0.25);
+    color: rgba(230,237,243,0.6);
+    font: inherit;
+    font-size: 12px;
+    padding: 5px 12px;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+  }
+  .tab-btn.active { background: rgba(57,255,20,0.12); color: #39ff14; border-color: rgba(57,255,20,0.5); }
+  .asset-list { display: flex; flex-direction: column; }
+  .asset-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 4px;
+    border-bottom: 1px solid rgba(57,255,20,0.1);
+    cursor: pointer;
+  }
+  .asset-row:hover { background: rgba(57,255,20,0.06); }
+  .asset-row.active { background: rgba(57,255,20,0.1); }
+  .asset-left { display: flex; align-items: center; gap: 12px; }
+  .asset-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #070606;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .asset-icon img { width: 100%; height: 100%; object-fit: cover; }
+  .asset-icon .icon-fallback { display: none; }
+  .asset-symbol { color: #e6edf3; font-weight: 600; font-size: 14px; }
+  .lev-badge {
+    font-size: 10px;
+    color: #39ff14;
+    background: rgba(57,255,20,0.12);
+    border: 1px solid rgba(57,255,20,0.3);
+    padding: 1px 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .asset-price { color: rgba(230,237,243,0.45); font-size: 12px; margin-top: 2px; }
+  .asset-right { text-align: right; }
+  .asset-change { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .asset-vol { color: rgba(230,237,243,0.4); font-size: 11px; margin-top: 2px; }
+  .chart-box {
+    margin-top: 22px;
+    border: 1px solid rgba(57,255,20,0.25);
+    padding: 10px;
+  }
+  .chart-box h2 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(57,255,20,0.6);
+  }
+  #tv-chart { height: 420px; }
+  footer {
+    margin-top: 18px;
+    font-size: 11px;
+    color: rgba(57,255,20,0.4);
+    text-align: center;
+  }
+  .error {
+    color: #ff6b6b;
+    font-size: 12px;
+    margin-top: 12px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>&gt; live_feed</h1>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <span class="status"><span class="dot"></span><span id="last-updated">connecting...</span></span>
+        <button id="refresh-btn" type="button">refresh</button>
+      </div>
+    </header>
+    <input id="search" type="text" placeholder="Search...">
+    <div class="tabs">
+      <button class="tab-btn active" data-filter="all" type="button">All</button>
+      <button class="tab-btn" data-filter="gainers" type="button">Gainers</button>
+      <button class="tab-btn" data-filter="losers" type="button">Losers</button>
+    </div>
+    <div id="rows" class="asset-list">
+      <div class="asset-price">fetching prices...</div>
+    </div>
+    <div id="error" class="error"></div>
+
+    <div class="chart-box">
+      <h2 id="chart-title">&gt; chart :: BTC/USD</h2>
+      <div class="tradingview-widget-container">
+        <div id="tv-chart"></div>
+      </div>
+    </div>
+
+    <footer>data: coingecko + tradingview // auto-refresh 30s</footer>
+  </div>
+
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <script>
+    const COINS = [
+      { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', tv: 'BTCUSDT', lev: '40x', color: '#f7931a', icon: 'btc' },
+      { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', tv: 'ETHUSDT', lev: '25x', color: '#8a92b2', icon: 'eth' },
+      { id: 'solana', symbol: 'SOL', name: 'Solana', tv: 'SOLUSDT', lev: '20x', color: '#14f195', icon: 'sol' },
+      { id: 'ripple', symbol: 'XRP', name: 'XRP', tv: 'XRPUSDT', lev: '20x', color: '#25a9e0', icon: 'xrp' },
+      { id: 'binancecoin', symbol: 'BNB', name: 'BNB', tv: 'BNBUSDT', lev: '20x', color: '#f3ba2f', icon: 'bnb' },
+      { id: 'dogecoin', symbol: 'DOGE', name: 'Dogecoin', tv: 'DOGEUSDT', lev: '15x', color: '#c2a633', icon: 'doge' },
+      { id: 'cardano', symbol: 'ADA', name: 'Cardano', tv: 'ADAUSDT', lev: '15x', color: '#0033ad', icon: 'ada' },
+      { id: 'avalanche-2', symbol: 'AVAX', name: 'Avalanche', tv: 'AVAXUSDT', lev: '15x', color: '#e84142', icon: 'avax' },
+      { id: 'litecoin', symbol: 'LTC', name: 'Litecoin', tv: 'LTCUSDT', lev: '15x', color: '#bfbbbb', icon: 'ltc' },
+      { id: 'zcash', symbol: 'ZEC', name: 'Zcash', tv: 'ZECUSDT', lev: '10x', color: '#f4b728', icon: 'zec' },
+      { id: 'hyperliquid', symbol: 'HYPE', name: 'Hyperliquid', tv: 'HYPEUSDT', lev: '10x', color: '#5ce1e6', icon: 'hype' },
+      { id: 'polkadot', symbol: 'DOT', name: 'Polkadot', tv: 'DOTUSDT', lev: '10x', color: '#e6007a', icon: 'dot' },
+      { id: 'chainlink', symbol: 'LINK', name: 'Chainlink', tv: 'LINKUSDT', lev: '10x', color: '#2a5ada', icon: 'link' },
+      { id: 'matic-network', symbol: 'POL', name: 'Polygon', tv: 'POLUSDT', lev: '10x', color: '#8247e5', icon: 'matic' },
+      { id: 'tron', symbol: 'TRX', name: 'TRON', tv: 'TRXUSDT', lev: '10x', color: '#eb0029', icon: 'trx' },
+      { id: 'the-open-network', symbol: 'TON', name: 'Toncoin', tv: 'TONUSDT', lev: '10x', color: '#0098ea', icon: 'ton' },
+      { id: 'cosmos', symbol: 'ATOM', name: 'Cosmos', tv: 'ATOMUSDT', lev: '10x', color: '#2e3148', icon: 'atom' },
+      { id: 'near', symbol: 'NEAR', name: 'NEAR Protocol', tv: 'NEARUSDT', lev: '10x', color: '#000000', icon: 'near' },
+      { id: 'aptos', symbol: 'APT', name: 'Aptos', tv: 'APTUSDT', lev: '10x', color: '#00d4aa', icon: 'apt' },
+      { id: 'arbitrum', symbol: 'ARB', name: 'Arbitrum', tv: 'ARBUSDT', lev: '10x', color: '#28a0f0', icon: 'arb' },
+      { id: 'optimism', symbol: 'OP', name: 'Optimism', tv: 'OPUSDT', lev: '10x', color: '#ff0420', icon: 'op' },
+      { id: 'sui', symbol: 'SUI', name: 'Sui', tv: 'SUIUSDT', lev: '10x', color: '#6fbcf0', icon: 'sui' },
+      { id: 'injective-protocol', symbol: 'INJ', name: 'Injective', tv: 'INJUSDT', lev: '10x', color: '#00d2ff', icon: 'inj' },
+      { id: 'uniswap', symbol: 'UNI', name: 'Uniswap', tv: 'UNIUSDT', lev: '10x', color: '#ff007a', icon: 'uni' },
+      { id: 'filecoin', symbol: 'FIL', name: 'Filecoin', tv: 'FILUSDT', lev: '5x', color: '#0090ff', icon: 'fil' },
+      { id: 'internet-computer', symbol: 'ICP', name: 'Internet Computer', tv: 'ICPUSDT', lev: '5x', color: '#f15a24', icon: 'icp' },
+      { id: 'ethereum-classic', symbol: 'ETC', name: 'Ethereum Classic', tv: 'ETCUSDT', lev: '5x', color: '#328332', icon: 'etc' },
+      { id: 'stellar', symbol: 'XLM', name: 'Stellar', tv: 'XLMUSDT', lev: '5x', color: '#14b6e7', icon: 'xlm' },
+      { id: 'hedera-hashgraph', symbol: 'HBAR', name: 'Hedera', tv: 'HBARUSDT', lev: '5x', color: '#3f4750', icon: 'hbar' },
+      { id: 'vechain', symbol: 'VET', name: 'VeChain', tv: 'VETUSDT', lev: '5x', color: '#15bdff', icon: 'vet' },
+      { id: 'shiba-inu', symbol: 'SHIB', name: 'Shiba Inu', tv: 'SHIBUSDT', lev: '3x', color: '#ffa409', icon: 'shib' },
+      { id: 'pepe', symbol: 'PEPE', name: 'Pepe', tv: 'PEPEUSDT', lev: '3x', color: '#4caf50', icon: 'pepe', aliases: ['kpepe', '1000pepe'] },
+      { id: 'dogwifcoin', symbol: 'WIF', name: 'dogwifhat', tv: 'WIFUSDT', lev: '3x', color: '#c9a876', icon: 'wif' },
+      { id: 'bonk', symbol: 'BONK', name: 'Bonk', tv: 'BONKUSDT', lev: '3x', color: '#ff8c00', icon: 'bonk' },
+      { id: 'monero', symbol: 'XMR', name: 'Monero', tv: 'XMRUSDT', lev: '10x', color: '#ff6600' },
+      { id: 'aave', symbol: 'AAVE', name: 'Aave', tv: 'AAVEUSDT', lev: '10x', color: '#b6509e' },
+      { id: 'maker', symbol: 'MKR', name: 'Maker', tv: 'MKRUSDT', lev: '10x', color: '#1aab9b' },
+      { id: 'the-graph', symbol: 'GRT', name: 'The Graph', tv: 'GRTUSDT', lev: '5x', color: '#6747ed' },
+      { id: 'algorand', symbol: 'ALGO', name: 'Algorand', tv: 'ALGOUSDT', lev: '5x', color: '#000000' },
+      { id: 'fantom', symbol: 'FTM', name: 'Fantom', tv: 'FTMUSDT', lev: '5x', color: '#1969ff' },
+      { id: 'eos', symbol: 'EOS', name: 'EOS', tv: 'EOSUSDT', lev: '5x', color: '#443f54' },
+      { id: 'tezos', symbol: 'XTZ', name: 'Tezos', tv: 'XTZUSDT', lev: '5x', color: '#2c7df7' },
+      { id: 'theta-token', symbol: 'THETA', name: 'Theta Network', tv: 'THETAUSDT', lev: '5x', color: '#2ab8e6' },
+      { id: 'flow', symbol: 'FLOW', name: 'Flow', tv: 'FLOWUSDT', lev: '5x', color: '#00ef8b' },
+      { id: 'chiliz', symbol: 'CHZ', name: 'Chiliz', tv: 'CHZUSDT', lev: '5x', color: '#cd0124' },
+      { id: 'axie-infinity', symbol: 'AXS', name: 'Axie Infinity', tv: 'AXSUSDT', lev: '5x', color: '#0055d5' },
+      { id: 'the-sandbox', symbol: 'SAND', name: 'The Sandbox', tv: 'SANDUSDT', lev: '5x', color: '#00adef' },
+      { id: 'decentraland', symbol: 'MANA', name: 'Decentraland', tv: 'MANAUSDT', lev: '5x', color: '#ff2d55' },
+      { id: 'gala', symbol: 'GALA', name: 'Gala', tv: 'GALAUSDT', lev: '5x', color: '#000000' },
+      { id: 'kaspa', symbol: 'KAS', name: 'Kaspa', tv: 'KASUSDT', lev: '5x', color: '#70c7ba' },
+      { id: 'render-token', symbol: 'RNDR', name: 'Render', tv: 'RNDRUSDT', lev: '10x', color: '#000000' },
+      { id: 'sei-network', symbol: 'SEI', name: 'Sei', tv: 'SEIUSDT', lev: '10x', color: '#8a2be2' },
+      { id: 'celestia', symbol: 'TIA', name: 'Celestia', tv: 'TIAUSDT', lev: '10x', color: '#7b2bf9' },
+      { id: 'mantle', symbol: 'MNT', name: 'Mantle', tv: 'MNTUSDT', lev: '5x', color: '#000000' },
+      { id: 'kava', symbol: 'KAVA', name: 'Kava', tv: 'KAVAUSDT', lev: '5x', color: '#ff433e' },
+      { id: 'curve-dao-token', symbol: 'CRV', name: 'Curve DAO', tv: 'CRVUSDT', lev: '5x', color: '#3a3a3a' },
+      { id: 'compound-governance-token', symbol: 'COMP', name: 'Compound', tv: 'COMPUSDT', lev: '5x', color: '#00d395' },
+      { id: 'havven', symbol: 'SNX', name: 'Synthetix', tv: 'SNXUSDT', lev: '5x', color: '#00d1ff' },
+      { id: '1inch', symbol: '1INCH', name: '1inch', tv: '1INCHUSDT', lev: '5x', color: '#1b314f' },
+      { id: 'pancakeswap-token', symbol: 'CAKE', name: 'PancakeSwap', tv: 'CAKEUSDT', lev: '5x', color: '#d1884f' },
+      { id: 'lido-dao', symbol: 'LDO', name: 'Lido DAO', tv: 'LDOUSDT', lev: '5x', color: '#00a3ff' },
+      { id: 'dydx-chain', symbol: 'DYDX', name: 'dYdX', tv: 'DYDXUSDT', lev: '5x', color: '#6966ff' },
+      { id: 'blur', symbol: 'BLUR', name: 'Blur', tv: 'BLURUSDT', lev: '3x', color: '#ff8700' },
+      { id: 'jupiter-exchange-solana', symbol: 'JUP', name: 'Jupiter', tv: 'JUPUSDT', lev: '5x', color: '#c7f284' },
+      { id: 'pyth-network', symbol: 'PYTH', name: 'Pyth Network', tv: 'PYTHUSDT', lev: '5x', color: '#7c3aed' },
+      { id: 'worldcoin-wld', symbol: 'WLD', name: 'Worldcoin', tv: 'WLDUSDT', lev: '5x', color: '#000000' },
+      { id: 'starknet', symbol: 'STRK', name: 'Starknet', tv: 'STRKUSDT', lev: '5x', color: '#0c0c4e' },
+      { id: 'immutable-x', symbol: 'IMX', name: 'Immutable', tv: 'IMXUSDT', lev: '5x', color: '#17150e' },
+      { id: 'ondo-finance', symbol: 'ONDO', name: 'Ondo', tv: 'ONDOUSDT', lev: '5x', color: '#1c4de0' },
+      { id: 'ethena', symbol: 'ENA', name: 'Ethena', tv: 'ENAUSDT', lev: '5x', color: '#5a5cf0' },
+      { id: 'floki', symbol: 'FLOKI', name: 'Floki', tv: 'FLOKIUSDT', lev: '3x', color: '#f2a900' },
+      { id: 'bittensor', symbol: 'TAO', name: 'Bittensor', tv: 'TAOUSDT', lev: '5x', color: '#0d0d0d' },
+      { id: 'fetch-ai', symbol: 'FET', name: 'Fetch.ai', tv: 'FETUSDT', lev: '5x', color: '#583ce0' },
+      { id: 'akash-network', symbol: 'AKT', name: 'Akash Network', tv: 'AKTUSDT', lev: '5x', color: '#e0165b' },
+      { id: 'blockstack', symbol: 'STX', name: 'Stacks', tv: 'STXUSDT', lev: '5x', color: '#5546ff' },
+      { id: 'neo', symbol: 'NEO', name: 'Neo', tv: 'NEOUSDT', lev: '5x', color: '#00e599' },
+      { id: 'iota', symbol: 'IOTA', name: 'IOTA', tv: 'IOTAUSDT', lev: '5x', color: '#131f37' },
+      { id: 'gmx', symbol: 'GMX', name: 'GMX', tv: 'GMXUSDT', lev: '5x', color: '#2d42fc' },
+      { id: 'ravencoin', symbol: 'RVN', name: 'Ravencoin', tv: 'RVNUSDT', lev: '3x', color: '#384182' },
+    ];
+    const ids = COINS.map(c => c.id).join(',');
+    const API = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&price_change_percentage=24h`;
+
+    const rowsEl = document.getElementById('rows');
+    const statusEl = document.getElementById('last-updated');
+    const errorEl = document.getElementById('error');
+    const btn = document.getElementById('refresh-btn');
+    const searchEl = document.getElementById('search');
+    const tabBtns = [...document.querySelectorAll('.tab-btn')];
+    let filterMode = 'all';
+    let latestData = null;
+
+    function fmtPrice(n) {
+      if (n == null) return '--';
+      return n >= 1
+        ? n.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })
+        : n.toPrecision(4);
+    }
+
+    function fmtVol(n) {
+      if (n == null) return '--';
+      if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`;
+      if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+      if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
+      return n.toFixed(0);
+    }
+
+    function iconMarkup(coin, imageUrl) {
+      return `
+        <span class="asset-icon" style="background:${coin.color}">
+          <img src="${imageUrl || ''}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+          <span class="icon-fallback">${coin.symbol[0]}</span>
+        </span>
+      `;
+    }
+
+    function render(data) {
+      latestData = data;
+      const query = searchEl.value.trim().toLowerCase();
+      rowsEl.innerHTML = '';
+      let visible = COINS.filter(coin => {
+        if (query) {
+          const aliasHit = (coin.aliases || []).some(a => a.includes(query));
+          if (!coin.symbol.toLowerCase().includes(query) && !coin.name.toLowerCase().includes(query) && !aliasHit) return false;
+        }
+        const change = data[coin.id] ? data[coin.id].price_change_percentage_24h : null;
+        if (filterMode === 'gainers') return change != null && change >= 0;
+        if (filterMode === 'losers') return change != null && change < 0;
+        return true;
+      });
+      if (!visible.length) {
+        rowsEl.innerHTML = '<div class="asset-price">no assets match</div>';
+        return;
+      }
+      visible.forEach(coin => {
+        const info = data[coin.id];
+        const row = document.createElement('div');
+        row.className = 'asset-row';
+        row.dataset.tv = coin.tv;
+        row.dataset.symbol = coin.symbol;
+        if (coin.tv === activeSymbol) row.classList.add('active');
+        if (!info) {
+          row.innerHTML = `
+            <div class="asset-left">
+              ${iconMarkup(coin)}
+              <div>
+                <div class="asset-symbol">${coin.symbol} <span class="lev-badge">${coin.lev}</span></div>
+                <div class="asset-price">--</div>
+              </div>
+            </div>
+            <div class="asset-right">
+              <div class="asset-change">--</div>
+              <div class="asset-vol">-- vol</div>
+            </div>
+          `;
+          row.addEventListener('click', () => loadChart(coin.tv, coin.symbol));
+          rowsEl.appendChild(row);
+          return;
+        }
+        const change = info.price_change_percentage_24h;
+        const changeCls = change >= 0 ? 'up' : 'down';
+        const changeSign = change >= 0 ? '+' : '';
+        row.innerHTML = `
+          <div class="asset-left">
+            ${iconMarkup(coin, info.image)}
+            <div>
+              <div class="asset-symbol">${coin.symbol} <span class="lev-badge">${coin.lev}</span></div>
+              <div class="asset-price">$${fmtPrice(info.current_price)}</div>
+            </div>
+          </div>
+          <div class="asset-right">
+            <div class="asset-change ${changeCls}">${changeSign}${change != null ? change.toFixed(2) : '--'}%</div>
+            <div class="asset-vol">${fmtVol(info.total_volume)} vol</div>
+          </div>
+        `;
+        row.addEventListener('click', () => loadChart(coin.tv, coin.symbol));
+        rowsEl.appendChild(row);
+      });
+    }
+
+    let fetchInFlight = false;
+
+    async function loadPrices(retry = 0) {
+      if (fetchInFlight) return;
+      fetchInFlight = true;
+      btn.disabled = true;
+      errorEl.textContent = '';
+      statusEl.textContent = 'updating...';
+      try {
+        const res = await fetch(API);
+        if (res.status === 429 && retry < 3) {
+          const wait = 4000 * (retry + 1);
+          errorEl.textContent = `[!!] rate limited, retrying in ${wait / 1000}s...`;
+          statusEl.textContent = 'throttled';
+          fetchInFlight = false;
+          btn.disabled = false;
+          setTimeout(() => loadPrices(retry + 1), wait);
+          return;
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const list = await res.json();
+        const data = {};
+        list.forEach(coin => { data[coin.id] = coin; });
+        render(data);
+        statusEl.textContent = `live @ ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        errorEl.textContent = `[!!] feed error: ${err.message}`;
+        statusEl.textContent = 'stale';
+      } finally {
+        fetchInFlight = false;
+        btn.disabled = false;
+      }
+    }
+
+    let activeSymbol = 'BTCUSDT';
+    const chartTitleEl = document.getElementById('chart-title');
+
+    function loadChart(tvSymbol, symbol) {
+      activeSymbol = tvSymbol;
+      chartTitleEl.textContent = `> chart :: ${symbol}/USD`;
+      [...rowsEl.children].forEach(tr => tr.classList.toggle('active', tr.dataset.tv === tvSymbol));
+      if (typeof TradingView === 'undefined') return;
+      new TradingView.widget({
+        autosize: true,
+        symbol: `BINANCE:${tvSymbol}`,
+        interval: '60',
+        timezone: 'Etc/UTC',
+        theme: 'dark',
+        style: '1',
+        locale: 'en',
+        toolbar_bg: '#070606',
+        enable_publishing: false,
+        hide_top_toolbar: false,
+        hide_legend: false,
+        save_image: false,
+        backgroundColor: '#070606',
+        gridColor: 'rgba(57,255,20,0.08)',
+        container_id: 'tv-chart',
+      });
+    }
+
+    searchEl.addEventListener('input', () => { if (latestData) render(latestData); });
+    tabBtns.forEach(tabBtn => {
+      tabBtn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabBtn.classList.add('active');
+        filterMode = tabBtn.dataset.filter;
+        if (latestData) render(latestData);
+      });
+    });
+
+    btn.addEventListener('click', loadPrices);
+    loadPrices();
+    loadChart(activeSymbol, 'BTC');
+    setInterval(loadPrices, 30000);
+  </script>
+</body>
+</html>

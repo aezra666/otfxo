@@ -268,6 +268,71 @@ body::before {
 .term-err { color: #ff6b6b; }
 .term-dim { color: rgba(230,237,243,0.55); }
 
+.term-glitch {
+  position: relative;
+  animation: term-glitch-shake 1.1s cubic-bezier(.36,.07,.19,.97) both;
+}
+.term-glitch::before,
+.term-glitch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: inherit;
+  mix-blend-mode: screen;
+}
+.term-glitch::before {
+  box-shadow: -3px 0 rgba(255,0,60,0.6);
+  animation: term-glitch-slice-red 1.1s steps(2, jump-none) both;
+}
+.term-glitch::after {
+  box-shadow: 3px 0 rgba(0,255,255,0.6);
+  animation: term-glitch-slice-cyan 1.1s steps(2, jump-none) both;
+}
+.term-glitch .term-line {
+  animation: term-glitch-flicker 1.1s steps(12, jump-none) both;
+}
+@keyframes term-glitch-shake {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-2px, 1px); }
+  20% { transform: translate(2px, -1px); }
+  30% { transform: translate(-3px, 0); }
+  40% { transform: translate(3px, 1px); }
+  50% { transform: translate(-1px, -1px); }
+  60% { transform: translate(1px, 1px); }
+  70% { transform: translate(-2px, 0); }
+  80% { transform: translate(2px, -1px); }
+  90% { transform: translate(-1px, 1px); }
+}
+@keyframes term-glitch-slice-red {
+  0% { clip-path: inset(10% 0 80% 0); }
+  20% { clip-path: inset(60% 0 5% 0); }
+  40% { clip-path: inset(30% 0 55% 0); }
+  60% { clip-path: inset(75% 0 10% 0); }
+  80% { clip-path: inset(15% 0 70% 0); }
+  100% { clip-path: inset(0 0 100% 0); }
+}
+@keyframes term-glitch-slice-cyan {
+  0% { clip-path: inset(70% 0 15% 0); }
+  20% { clip-path: inset(20% 0 65% 0); }
+  40% { clip-path: inset(50% 0 30% 0); }
+  60% { clip-path: inset(5% 0 80% 0); }
+  80% { clip-path: inset(65% 0 20% 0); }
+  100% { clip-path: inset(100% 0 0 0); }
+}
+@keyframes term-glitch-flicker {
+  0%, 100% { opacity: 1; }
+  8% { opacity: 0.3; }
+  16% { opacity: 1; }
+  24% { opacity: 0.5; }
+  32% { opacity: 1; }
+  48% { opacity: 0.4; }
+  56% { opacity: 1; }
+  72% { opacity: 0.6; }
+  80% { opacity: 1; }
+}
+
+
 .intro-logo img {
   width: 300px;
   height: 300px;

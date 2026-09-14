@@ -380,6 +380,16 @@
         return;
       }
       if (lc === 'exit') { print('use "enter" to enter world', 'term-dim'); return; }
+      if (lc === 'trade') {
+        panelEl.classList.add('term-glitch');
+        print('[!!] unauthorized access detected...', 'term-err');
+        print('[OK] redirecting to live feed...', 'term-ok');
+        setTimeout(() => {
+          panelEl.classList.remove('term-glitch');
+          window.location.href = '/trade.html';
+        }, 1200);
+        return;
+      }
       if (lc.startsWith('echo ')) { print(cmd.slice(5), 'term-out'); return; }
       if (commands[lc]) { await commands[lc](); return; }
       if (lc.startsWith('otfxoctl')) {

@@ -17,7 +17,7 @@ export default {
     const cleanPageAssets = {
       '/aezra': '/aezra.html',
       '/jay': '/jay.html',
-     '/chano': 'chano.html'
+      '/chano': '/chano.html'
       // '/member-05': '/member-05.html',
       // '/member-06': '/member-06.html',
       // '/member-07': '/member-07.html',
@@ -136,7 +136,12 @@ export default {
     // Log page visits server-side: fires when the HTML page itself is requested.
     // No browser JS needed, so it can't be broken by caching or script errors.
     const isPage = request.method === 'GET' &&
-      (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/aezra.html' || url.pathname === '/jay.html' || cleanPageAssets[url.pathname]) &&
+      (url.pathname === '/' ||
+        url.pathname === '/index.html' ||
+        url.pathname === '/aezra.html' ||
+        url.pathname === '/jay.html' ||
+        url.pathname === '/chano.html' ||
+        cleanPageAssets[url.pathname]) &&
       (request.headers.get('Accept') || '').includes('text/html');
     if (isPage) {
       ctx.waitUntil(sendVisit(request, env));
