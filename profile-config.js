@@ -1,6 +1,6 @@
 window.OTFXO_PROFILES = {
   '1034804876733071382': {//aezra
-    banner: 'https://file.garden/ap_Ebnzi9V7bLTDs/Tiny%20Stories_%20They%20Come%20At%20Night.gif',
+    banner: 'https://file.garden/ap_Ebnzi9V7bLTDs/100F9DFB-55A3-41A8-9903-A701B841EECD.gif',
     music: "https://file.garden/ap_Ebnzi9V7bLTDs/Escape%20-%20Nemzzz%20(Remix%20by%20AJ)%20-%20AJ%20OTB%20(128k).mp3"
   },
   '1483321828838477966': {//jay
