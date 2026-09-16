@@ -386,8 +386,11 @@
         print('[OK] redirecting to live feed...', 'term-ok');
         setTimeout(() => {
           panelEl.classList.remove('term-glitch');
-          window.location.href = '/trade.html';
-        }, 1200);
+          panelEl.classList.add('term-crt-off');
+          setTimeout(() => {
+            window.location.href = '/trade.html';
+          }, 600);
+        }, 1100);
         return;
       }
       if (lc.startsWith('echo ')) { print(cmd.slice(5), 'term-out'); return; }
