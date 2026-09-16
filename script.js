@@ -381,16 +381,12 @@
       }
       if (lc === 'exit') { print('use "enter" to enter world', 'term-dim'); return; }
       if (lc === 'trade') {
-        panelEl.classList.add('term-glitch');
         print('[!!] unauthorized access detected...', 'term-err');
         print('[OK] redirecting to live feed...', 'term-ok');
+        panelEl.classList.add('term-crt-off');
         setTimeout(() => {
-          panelEl.classList.remove('term-glitch');
-          panelEl.classList.add('term-crt-off');
-          setTimeout(() => {
-            window.location.href = '/trade.html';
-          }, 600);
-        }, 1100);
+          window.location.href = '/trade.html';
+        }, 600);
         return;
       }
       if (lc.startsWith('echo ')) { print(cmd.slice(5), 'term-out'); return; }
