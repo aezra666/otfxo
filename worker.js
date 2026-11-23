@@ -16,7 +16,7 @@ export default {
 
     const cleanPageAssets = {
       '/aezra': '/aezra.html',
-      '/jay': '/jay.html',
+      '/prince': '/prince.html',
       '/chano': '/chano.html'
       // '/member-05': '/member-05.html',
       // '/member-06': '/member-06.html',
@@ -41,7 +41,7 @@ export default {
 
     const cleanPageRedirects = {
       '/aezra.html': '/aezra',
-      '/jay.html': '/jay',
+      '/prince.html': '/prince',
       '/chano.html': '/chano'
       // '/member-05.html': '/member-05',
       // '/member-06.html': '/member-06',
