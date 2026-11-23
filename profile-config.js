@@ -3,7 +3,7 @@ window.OTFXO_PROFILES = {
     banner: 'https://file.garden/ap_Ebnzi9V7bLTDs/100F9DFB-55A3-41A8-9903-A701B841EECD.gif',
     music: "https://file.garden/ap_Ebnzi9V7bLTDs/Escape%20-%20Nemzzz%20(Remix%20by%20AJ)%20-%20AJ%20OTB%20(128k).mp3"
   },
-  '1483321828838477966': {//jay
+  '914504297885102140': {//prince
     banner: 'https://file.garden/ap_Ebnzi9V7bLTDs/download.gif',
     music: 'https://file.garden/ap_Ebnzi9V7bLTDs/Janice%20STFU.mp3'
   },
