@@ -992,6 +992,7 @@ document.querySelectorAll('.card').forEach(card => {
       '1034804876733071382': 'aezra',
       '914504297885102140': 'prince',
       '855390015940984853': 'chano',
+      '980840204921368576': 'del',
     };
     const page = pages[card.dataset.userId];
     if (page) window.location.href = page;

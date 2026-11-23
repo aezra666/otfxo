@@ -17,8 +17,8 @@ export default {
     const cleanPageAssets = {
       '/aezra': '/aezra.html',
       '/prince': '/prince.html',
-      '/chano': '/chano.html'
-      // '/member-05': '/member-05.html',
+      '/chano': '/chano.html',
+      '/del': '/del.html',
       // '/member-06': '/member-06.html',
       // '/member-07': '/member-07.html',
       // '/member-08': '/member-08.html',
@@ -42,8 +42,8 @@ export default {
     const cleanPageRedirects = {
       '/aezra.html': '/aezra',
       '/prince.html': '/prince',
-      '/chano.html': '/chano'
-      // '/member-05.html': '/member-05',
+      '/chano.html': '/chano',
+      '/del.html': '/del',
       // '/member-06.html': '/member-06',
       // '/member-07.html': '/member-07',
       // '/member-08.html': '/member-08',
