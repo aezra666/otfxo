@@ -990,7 +990,7 @@ document.querySelectorAll('.card').forEach(card => {
   card.addEventListener('click', () => {
     const pages = {
       '1034804876733071382': 'aezra',
-      '1483321828838477966': 'jay',
+      '914504297885102140': 'prince',
       '855390015940984853': 'chano',
     };
     const page = pages[card.dataset.userId];
