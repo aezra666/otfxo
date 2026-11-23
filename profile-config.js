@@ -15,9 +15,9 @@ window.OTFXO_PROFILES = {
     banner: 'https://file.garden/ap_Ebnzi9V7bLTDs/24e9f72caf1b5efe9f2f2f09c6df66ed.gif',
     music: 'https://file.garden/ap_Ebnzi9V7bLTDs/Lana%20Del%20Rey%20-%20Ultraviolence.mp3'
   },
-  'PUT_DISCORD_ID_06_HERE': {
-    banner: '',
-    music: ''
+  '1425063192425398372': {//manok
+    banner: 'https://file.garden/ap_Ebnzi9V7bLTDs/5ade45a645ad9e8eff68fc8365c28e29.gif',
+    music: 'https://file.garden/ap_Ebnzi9V7bLTDs/YNW%20Melly%20-%20Murder%20On%20My%20Mind%20(Lyrics).mp3'
   },
   'PUT_DISCORD_ID_07_HERE': {
     banner: '',
